@@ -15,3 +15,8 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Local credential/session files — never commit these
+*gh-creds*
+*gh-token*
+*.credentials
