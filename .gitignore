@@ -1,0 +1,17 @@
+# Build output (NetBeans/Ant)
+build/
+dist/
+*.class
+*.jar
+
+# NetBeans private/IDE state
+nbproject/private/
+nbbuild/
+nbdist/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
