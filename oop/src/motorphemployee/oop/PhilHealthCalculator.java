@@ -1,17 +1,22 @@
 package motorphemployee.oop;
 
 /**
- * PhilHealthCalculator - PhilHealth premium: 3% rate with a PHP 300 floor and PHP 1,800 ceiling
+ * PhilHealthCalculator - PhilHealth employee share: 50% of the premium (3% rate with a PHP 300
+ * floor and a PHP 1,800 ceiling), so the deduction runs from PHP 150 to PHP 900
  * (MS1 Week 3 CRC: "PhilHealthCalculator (Concrete Subclass)").
  *
- * Formula carried over 1:1 from CP2 (MainMenu.java:1378 / Dashboard.java:1294) so payroll
- * results stay identical: flat 300 up to 10,000, then 300 + 3% of the excess, capped at 1,800.
+ * Decision B (2026-10-27): the premium formula is carried over from CP2 unchanged, but the
+ * EMPLOYEE SHARE is applied. The official matrix states the premium is equally shared between
+ * employee and employer (Home_Philhealth_Matrix.xlsx note A6; SAMPLE B10 = 375 on a 25,000
+ * basic salary). CP2 returned the full premium, which over-deducted every payslip by 2x -
+ * logged as KI-02 in oop/Q4-matrix-verification.md.
  */
 public class PhilHealthCalculator extends GovernmentContributionCalculator {
 
+    private static final double EMPLOYEE_SHARE_RATE = 0.5;
     private static final double PREMIUM_RATE = 0.03;
-    private static final double MIN_CONTRIBUTION = 300.0;
-    private static final double MAX_CONTRIBUTION = 1800.0;
+    private static final double MIN_PREMIUM = 300.0;
+    private static final double MAX_PREMIUM = 1800.0;
     private static final double LOWER_CAP_SALARY = 10000.0;
     private static final double UPPER_CAP_SALARY = 59999.99;
 
@@ -22,12 +27,18 @@ public class PhilHealthCalculator extends GovernmentContributionCalculator {
     @Override
     public double calculate(double grossSalary) {
         double salary = requireValidSalary(grossSalary);
+
+        // Official monthly premium: 3% of salary, floor 300, ceiling 1,800 (matrix A2:C4).
+        double monthlyPremium;
         if (salary <= LOWER_CAP_SALARY) {
-            return MIN_CONTRIBUTION;
+            monthlyPremium = MIN_PREMIUM;
+        } else if (salary <= UPPER_CAP_SALARY) {
+            monthlyPremium = Math.min(MIN_PREMIUM + (salary - LOWER_CAP_SALARY) * PREMIUM_RATE, MAX_PREMIUM);
+        } else {
+            monthlyPremium = MAX_PREMIUM;
         }
-        if (salary <= UPPER_CAP_SALARY) {
-            return Math.min(MIN_CONTRIBUTION + (salary - LOWER_CAP_SALARY) * PREMIUM_RATE, MAX_CONTRIBUTION);
-        }
-        return MAX_CONTRIBUTION;
+
+        // The employee pays HALF (matrix note A6: "equally shared"; SAMPLE B10 = 375 of 750).
+        return monthlyPremium * EMPLOYEE_SHARE_RATE;
     }
 }

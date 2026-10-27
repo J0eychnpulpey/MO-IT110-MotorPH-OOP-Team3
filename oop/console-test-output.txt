@@ -47,39 +47,41 @@ java.version = 21.0.12.1
     - Withholding Tax (TAX, active)   (applied after the three above)
 
   PARITY|<gross>|<sss>|<philhealth>|<pagibig>|<tax on (gross - sss-ph-ibig)>
-  PARITY_SKIPPED|0.00|135.000000|300.000000|0.000000|reason=negative taxable income -435.00
-  PARITY|900.00|135.000000|300.000000|0.000000|0.000000
-  PARITY|1000.00|135.000000|300.000000|30.000000|0.000000
-  PARITY|1500.00|135.000000|300.000000|45.000000|0.000000
-  PARITY|1500.01|135.000000|300.000000|60.000400|0.000000
-  PARITY|2400.00|135.000000|300.000000|96.000000|0.000000
-  PARITY|3250.00|135.000000|300.000000|100.000000|0.000000
-  PARITY|3250.01|157.500000|300.000000|100.000000|0.000000
-  PARITY|4000.00|180.000000|300.000000|100.000000|0.000000
-  PARITY|8000.00|360.000000|300.000000|100.000000|0.000000
-  PARITY|10000.00|450.000000|300.000000|100.000000|0.000000
-  PARITY|10000.01|450.000000|300.000300|100.000000|0.000000
-  PARITY|12345.67|562.500000|370.370100|100.000000|0.000000
-  PARITY|15000.00|675.000000|450.000000|100.000000|0.000000
-  PARITY|20832.00|945.000000|624.960000|100.000000|0.000000
-  PARITY|20832.01|945.000000|624.960300|100.000000|0.000000
-  PARITY|25000.00|1125.000000|750.000000|100.000000|438.600000
-  PARITY|33333.00|1125.000000|999.990000|100.000000|2055.202000
-  PARITY|45000.00|1125.000000|1350.000000|100.000000|4773.000000
-  PARITY|59999.99|1125.000000|1799.999700|100.000000|8410.497575
-  PARITY|60000.00|1125.000000|1800.000000|100.000000|8410.500000
-  PARITY|66667.00|1125.000000|1800.000000|100.000000|10077.250000
-  PARITY|100000.00|1125.000000|1800.000000|100.000000|19925.400000
-  PARITY|166667.00|1125.000000|1800.000000|100.000000|39925.500000
-  PARITY|666667.67|1125.000000|1800.000000|100.000000|199865.544400
-  PARITY|1000000.00|1125.000000|1800.000000|100.000000|316441.130000
+  PARITY_SKIPPED|0.00|135.000000|150.000000|0.000000|reason=negative taxable income -285.00
+  PARITY|900.00|135.000000|150.000000|0.000000|0.000000
+  PARITY|1000.00|135.000000|150.000000|10.000000|0.000000
+  PARITY|1500.00|135.000000|150.000000|15.000000|0.000000
+  PARITY|1500.01|135.000000|150.000000|30.000200|0.000000
+  PARITY|2400.00|135.000000|150.000000|48.000000|0.000000
+  PARITY|3250.00|157.500000|150.000000|65.000000|0.000000
+  PARITY|3250.01|157.500000|150.000000|65.000200|0.000000
+  PARITY|4000.00|180.000000|150.000000|80.000000|0.000000
+  PARITY|8000.00|360.000000|150.000000|100.000000|0.000000
+  PARITY|10000.00|450.000000|150.000000|100.000000|0.000000
+  PARITY|10000.01|450.000000|150.000150|100.000000|0.000000
+  PARITY|12345.67|562.500000|185.185050|100.000000|0.000000
+  PARITY|15000.00|675.000000|225.000000|100.000000|0.000000
+  PARITY|20832.00|945.000000|312.480000|100.000000|0.000000
+  PARITY|20832.01|945.000000|312.480150|100.000000|0.000000
+  PARITY|25000.00|1125.000000|375.000000|100.000000|513.400000
+  PARITY|33333.00|1125.000000|499.995000|100.000000|2155.001000
+  PARITY|45000.00|1125.000000|675.000000|100.000000|4941.750000
+  PARITY|59999.99|1125.000000|899.999850|100.000000|8635.497538
+  PARITY|60000.00|1125.000000|900.000000|100.000000|8635.500000
+  PARITY|66667.00|1125.000000|900.000000|100.000000|10302.250000
+  PARITY|100000.00|1125.000000|900.000000|100.000000|20195.400000
+  PARITY|166667.00|1125.000000|900.000000|100.000000|40195.500000
+  PARITY|666667.67|1125.000000|900.000000|100.000000|200153.544400
+  PARITY|1000000.00|1125.000000|900.000000|100.000000|316756.130000
   PASS  SSSCalculator caps at 1125.00
   PASS  SSSCalculator bracket count == 45
-  PASS  PhilHealthCalculator floor 300.00
-  PASS  PhilHealthCalculator cap 1800.00
+  PASS  PhilHealthCalculator employee-share floor 150.00
+  PASS  PhilHealthCalculator employee-share cap 900.00
   PASS  PagIbigCalculator cap 100.00
-  PASS  PagIbigCalculator 0 below 1000 salary
+  PASS  PagIbigCalculator 0 below 1000 salary (matrix silent -> UNVERIFIED)
+  PASS  PagIbigCalculator charges the employee share only (2,500 -> 50.00)
   PASS  WithholdingTaxCalculator 0 at/below 20832
+  PASS  WithholdingTaxCalculator never negative in the 20,832-20,833 gap
   PASS  calculate(-1) rejected by every calculator  -> IllegalArgumentException: SSS Contribution: invalid salary -1.0
   PASS  negative taxable income refused instead of paying a negative net (KI-01)  -> IllegalArgumentException: Withholding Tax: invalid salary -435.0
 --- D. AttendanceLog integrity
@@ -97,7 +99,7 @@ java.version = 21.0.12.1
   PASS  future-dated clock-in rejected  -> IllegalArgumentException: cannot clock in on a future date: 2099-01-01
   PASS  unknown employee rejected  -> IllegalArgumentException: employeeId must be positive: 0
 --- E. PayrollRecord immutability + internal consistency
-  PayrollRecord{employee=10001, period=2026-10-11..2026-10-26, gross=35000.00, sss=1125.00, philhealth=750.00, pagibig=100.00, tax=2025.00, net=31000.00}
+  PayrollRecord{employee=10001, period=2026-10-12..2026-10-27, gross=35000.00, sss=1125.00, philhealth=750.00, pagibig=100.00, tax=2025.00, net=31000.00}
   PASS  PayrollRecord keeps netIncome
   PASS  getTotalDeductions() == 4000
   PASS  PayrollRecord has no setters (immutable)
@@ -106,25 +108,46 @@ java.version = 21.0.12.1
   PASS  periodEnd before periodStart rejected  -> IllegalArgumentException: periodEnd cannot be before periodStart
 --- F. Attendance -> gross -> deductions -> net (end-to-end backend run)
   SSS Contribution = 135.00
-  PhilHealth Contribution = 300.00
-  Pag-IBIG Contribution = 76.80
+  PhilHealth Contribution = 150.00
+  Pag-IBIG Contribution = 38.40
   worked days      = 20
   hourly rate      = 12.00
   gross pay        = 1,920.00
-  total deductions = 511.80
+  total deductions = 323.40
   withholding tax  = 0.00
-  net pay          = 1,408.20
+  net pay          = 1,596.60
   PASS  worked days == 20
   PASS  gross == 20 * 12 * 8
   PASS  net pay == gross - all deductions
   PASS  net pay is positive and lower than gross
 --- G. Known issue KI-01 surfaced by this run (Week 8 fix decision)
   At gross pay 0.00 the statutory minimums are still charged:
-    SSS = 135.00 + PhilHealth = 300.00 + Pag-IBIG = 0.00  ->  435.00 of deductions
-  CP2 behaviour : tax on -435.00 = 0.00, so net pay = -435.00 (a negative payslip)
+    SSS = 135.00 + PhilHealth = 150.00 + Pag-IBIG = 0.00  ->  285.00 of deductions
+  CP2 behaviour : tax on -285.00 = 0.00, so net pay = -285.00 (a negative payslip)
   OOP behaviour : the calculators refuse a negative taxable income instead
-  -> logged as KI-01; needs a business rule (clamp gross to >= deductions
-     or skip contributions below the statutory floor) before the GUI is wired.
+  -> logged as KI-01; the fix (decision D3) is a non-positive gross rejected by
+     PayrollCalculator.calculatePayroll before any deduction is applied.
+--- H. Official matrix conformance (decision B, 2026-10-27)
+  PASS  SSS below the table (3,249.99)  = 135.00
+  PASS  SSS first bracket is LOWER-bound inclusive (3,250)  = 157.50
+  PASS  SSS 5,000  = 225.00
+  PASS  SSS 10,000  = 450.00
+  PASS  SSS 20,000  = 900.00
+  PASS  SSS 24,750 (over the table)  = 1,125.00
+  PASS  PhilHealth 9,000 (premium floor 300 -> employee 150)  = 150.00
+  PASS  PhilHealth 15,000  = 225.00
+  PASS  PhilHealth 25,000 matches SAMPLE B10 = 375  = 375.00
+  PASS  PhilHealth 60,000 (ceiling 1,800 -> employee 900)  = 900.00
+  PASS  Pag-IBIG 1,000 (1% employee)  = 10.00
+  PASS  Pag-IBIG 1,500 (1% employee)  = 15.00
+  PASS  Pag-IBIG 2,500 (2% employee, no employer share)  = 50.00
+  PASS  Pag-IBIG 5,000 (cap 100 reached by the employee share)  = 100.00
+  PASS  WHT 20,832 (exempt ceiling)  = 0.00
+  PASS  WHT 23,400 matches SAMPLE B20 = 513.40  = 513.40
+  PASS  WHT 25,000 (20,833 excess base)  = 833.40
+  PASS  WHT 33,333 (bracket 2 floor)  = 2,500.00
+  PASS  WHT 40,000  = 4,166.75
+  PASS  WHT 90,000  = 17,832.90
 
-=== SUMMARY: 50 passed, 0 failed ===
+=== SUMMARY: 72 passed, 0 failed ===
 RESULT: PASS

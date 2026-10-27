@@ -15,8 +15,10 @@ import java.util.Locale;
  * when anything fails, so a broken build cannot be mistaken for a working one.
  *
  * The PARITY lines are machine-comparable with the CP2 baseline: the same input salary is
- * pushed through the CP2 static formulas (Cp2Parity) and through the OOP calculators, then
- * the two outputs are diffed. That diff is the evidence for "same results as CP2".
+ * pushed through the CP2 static formulas (Cp2Parity) and through the OOP calculators. Since
+ * decision B (2026-10-27) the OOP values follow the OFFICIAL government matrices, so a CP2
+ * mismatch is EXPECTED and documented (oop/Q4-matrix-verification.md) - section H proves the
+ * OOP numbers against the official values instead.
  */
 public final class ConsoleBackendTest {
 
@@ -48,11 +50,14 @@ public final class ConsoleBackendTest {
 
         section("G. Known issue KI-01 surfaced by this run (Week 8 fix decision)");
         System.out.println("  At gross pay 0.00 the statutory minimums are still charged:");
-        System.out.println("    SSS = 135.00 + PhilHealth = 300.00 + Pag-IBIG = 0.00  ->  435.00 of deductions");
-        System.out.println("  CP2 behaviour : tax on -435.00 = 0.00, so net pay = -435.00 (a negative payslip)");
+        System.out.println("    SSS = 135.00 + PhilHealth = 150.00 + Pag-IBIG = 0.00  ->  285.00 of deductions");
+        System.out.println("  CP2 behaviour : tax on -285.00 = 0.00, so net pay = -285.00 (a negative payslip)");
         System.out.println("  OOP behaviour : the calculators refuse a negative taxable income instead");
-        System.out.println("  -> logged as KI-01; needs a business rule (clamp gross to >= deductions");
-        System.out.println("     or skip contributions below the statutory floor) before the GUI is wired.");
+        System.out.println("  -> logged as KI-01; the fix (decision D3) is a non-positive gross rejected by");
+        System.out.println("     PayrollCalculator.calculatePayroll before any deduction is applied.");
+
+        section("H. Official matrix conformance (decision B, 2026-10-27)");
+        testOfficialMatrixConformance();
 
         System.out.println();
         System.out.println("=== SUMMARY: " + passed + " passed, " + failed + " failed ===");
@@ -179,11 +184,16 @@ public final class ConsoleBackendTest {
 
         check("SSSCalculator caps at 1125.00", new SSSCalculator().calculate(999999) == 1125.0);
         check("SSSCalculator bracket count == 45", new SSSCalculator().getBracketCount() == 45);
-        check("PhilHealthCalculator floor 300.00", new PhilHealthCalculator().calculate(9000) == 300.0);
-        check("PhilHealthCalculator cap 1800.00", new PhilHealthCalculator().calculate(999999) == 1800.0);
+        check("PhilHealthCalculator employee-share floor 150.00", new PhilHealthCalculator().calculate(9000) == 150.0);
+        check("PhilHealthCalculator employee-share cap 900.00", new PhilHealthCalculator().calculate(999999) == 900.0);
         check("PagIbigCalculator cap 100.00", new PagIbigCalculator().calculate(999999) == 100.0);
-        check("PagIbigCalculator 0 below 1000 salary", new PagIbigCalculator().calculate(900) == 0.0);
+        check("PagIbigCalculator 0 below 1000 salary (matrix silent -> UNVERIFIED)",
+                new PagIbigCalculator().calculate(900) == 0.0);
+        check("PagIbigCalculator charges the employee share only (2,500 -> 50.00)",
+                new PagIbigCalculator().calculate(2500) == 50.0);
         check("WithholdingTaxCalculator 0 at/below 20832", new WithholdingTaxCalculator().calculate(20832) == 0.0);
+        check("WithholdingTaxCalculator never negative in the 20,832-20,833 gap",
+                new WithholdingTaxCalculator().calculate(20832.50) >= 0.0);
         expectThrows("calculate(-1) rejected by every calculator", () -> new SSSCalculator().calculate(-1));
         expectThrows("negative taxable income refused instead of paying a negative net (KI-01)",
                 () -> new WithholdingTaxCalculator().calculate(-435.0));
@@ -311,7 +321,58 @@ public final class ConsoleBackendTest {
         check("net pay is positive and lower than gross", net > 0 && net < gross);
     }
 
+    // ------------------------------------------------------------------ H
+
+    /**
+     * Decision B (2026-10-27): every expected value below is copied from the official matrix
+     * (or from its SAMPLE block), not from CP2. Sources: Home_SSS_Matrix.xlsx, sheet
+     * "SSS Contribution Schedule"; Home_Philhealth_Matrix.xlsx (note A6, SAMPLE B10);
+     * Home_PagIBIG_Matrix.xlsx (B2/B3 employee rates, cap note A5);
+     * Home_WithholdingTax_Matrix.xlsx (bracket text B3, SAMPLE B20).
+     */
+    private static void testOfficialMatrixConformance() {
+        SSSCalculator sss = new SSSCalculator();
+        checkCloseTo("SSS below the table (3,249.99)", sss.calculate(3249.99), 135.00);
+        checkCloseTo("SSS first bracket is LOWER-bound inclusive (3,250)", sss.calculate(3250.00), 157.50);
+        checkCloseTo("SSS 5,000", sss.calculate(5000.00), 225.00);
+        checkCloseTo("SSS 10,000", sss.calculate(10000.00), 450.00);
+        checkCloseTo("SSS 20,000", sss.calculate(20000.00), 900.00);
+        checkCloseTo("SSS 24,750 (over the table)", sss.calculate(24750.00), 1125.00);
+
+        PhilHealthCalculator philhealth = new PhilHealthCalculator();
+        checkCloseTo("PhilHealth 9,000 (premium floor 300 -> employee 150)", philhealth.calculate(9000.00), 150.00);
+        checkCloseTo("PhilHealth 15,000", philhealth.calculate(15000.00), 225.00);
+        checkCloseTo("PhilHealth 25,000 matches SAMPLE B10 = 375", philhealth.calculate(25000.00), 375.00);
+        checkCloseTo("PhilHealth 60,000 (ceiling 1,800 -> employee 900)", philhealth.calculate(60000.00), 900.00);
+
+        PagIbigCalculator pagibig = new PagIbigCalculator();
+        checkCloseTo("Pag-IBIG 1,000 (1% employee)", pagibig.calculate(1000.00), 10.00);
+        checkCloseTo("Pag-IBIG 1,500 (1% employee)", pagibig.calculate(1500.00), 15.00);
+        checkCloseTo("Pag-IBIG 2,500 (2% employee, no employer share)", pagibig.calculate(2500.00), 50.00);
+        checkCloseTo("Pag-IBIG 5,000 (cap 100 reached by the employee share)", pagibig.calculate(5000.00), 100.00);
+
+        WithholdingTaxCalculator tax = new WithholdingTaxCalculator();
+        checkCloseTo("WHT 20,832 (exempt ceiling)", tax.calculate(20832.00), 0.00);
+        checkCloseTo("WHT 23,400 matches SAMPLE B20 = 513.40", tax.calculate(23400.00), 513.40);
+        checkCloseTo("WHT 25,000 (20,833 excess base)", tax.calculate(25000.00), 833.40);
+        checkCloseTo("WHT 33,333 (bracket 2 floor)", tax.calculate(33333.00), 2500.00);
+        checkCloseTo("WHT 40,000", tax.calculate(40000.00), 4166.75);
+        checkCloseTo("WHT 90,000", tax.calculate(90000.00), 17832.90);
+    }
+
     // ------------------------------------------------------------- helpers
+
+    private static void checkCloseTo(String description, double actual, double expected) {
+        boolean ok = Math.abs(actual - expected) <= 0.005;
+        if (ok) {
+            passed++;
+            System.out.println("  PASS  " + description + "  = " + money(actual));
+        } else {
+            failed++;
+            System.out.println("  FAIL  " + description + "  expected " + money(expected)
+                    + " but was " + money(actual));
+        }
+    }
 
     private static Employee sampleRegular() {
         return new RegularEmployee(10001, "Pore", "Paul", "1990-02-14", "Manila", "09171234567",
