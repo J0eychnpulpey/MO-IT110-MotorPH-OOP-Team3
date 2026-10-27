@@ -1,5 +1,6 @@
-# Build output (NetBeans/Ant)
+# Build output (NetBeans/Ant + Eclipse)
 build/
+bin/
 dist/
 *.class
 *.jar

@@ -44,8 +44,8 @@ The current `src/motorphemployee/` package, `nbproject/`, `build.xml`, and the C
 
 | Milestone | Weight | Due | Status |
 |---|---|---|---|
-| **MS1** — MotorPH OOP Design Package | 20% | Oct 5, 2026 | ✅ Design complete — 33 classes across W2–W5 (CRC Cards, Method Dictionary, Architecture Overview) |
-| **MS2** — MotorPH OOP Implementation Package | 40% | Target Week 10 | ⏳ Not started — refactoring begins Week 7 (Refactoring Plan + backend) |
+| **MS1** — MotorPH OOP Design Package | 20% | Oct 5, 2026 | ✅ Graded **35/35** — 16 unique classes (35 CRC rows · 97 method rows) across W2–W5 |
+| **MS2** — MotorPH OOP Implementation Package | 40% | **Nov 3, 2026 · 11:59 PM** | 🟠 In progress — backend waves 1–3 pushed (`263ce23`): 11 classes + console/parity evidence. Remaining: `PayrollCalculator` orchestrator, `Credentials`, Leave module, GUI rewiring |
 | **TA** — MotorPH Documentation | 40% | Nov 13, 2026 | ⏳ External QA + final documentation |
 
 ---
@@ -67,12 +67,16 @@ Structure rules for the implementation:
 
 ---
 
-## Running the baseline
+## Running the project
 
-NetBeans / Ant project (`build.xml`, `nbproject/`).
+📘 **Full setup instructions — VS Code, Eclipse and terminal: [`SETUP.md`](SETUP.md)**
 
-- Main entry point: `motorphemployee.LandingPage`
-- Sample login from the CP2 baseline: employee number `1-34`, username `admin`, password `password`
+The repository opens directly in **Eclipse** (`.project` / `.classpath` are included) and in **VS Code** (Extension Pack for Java).
+
+- **Two source roots:** `src` (CP2 GUI baseline) and `oop/src` (new OOP backend)
+- Main entry point: `motorphemployee.LoadingScreen` → `LandingPage` → `Login`
+- Console test harness: `motorphemployee.oop.ConsoleBackendTest`
+- Sample login (fictional MotorPH data): employee number `1-34`, username `admin`, password `password`
 
 > ⚠️ The credentials above are the CP2 baseline's **demo/sample data**. The refactor replaces plaintext credential storage with hashed storage (see the `Credentials` class in the MS1 design).
 
@@ -82,7 +86,8 @@ NetBeans / Ant project (`build.xml`, `nbproject/`).
 
 - **Branches:** `main` = stable; work in feature branches, merge via pull request.
 - **Commits:** short imperative subject + what changed (`Add Employee setter validation`).
-- **Never commit:** `build/`, `dist/`, `nbproject/private/`, IDE-local files.
+- **Never commit:** `build/`, `bin/`, `dist/`, `*.class`, `nbproject/private/`, `.vscode/` (local editor settings).
+- **Committed on purpose:** `.project`, `.classpath`, `.settings/` — portable Eclipse project settings so every member can import the repository in one step.
 - **Documentation consistency:** the app, the Milestone worksheet, the test evidence, and this repository must tell the **same story**.
 
 ---
