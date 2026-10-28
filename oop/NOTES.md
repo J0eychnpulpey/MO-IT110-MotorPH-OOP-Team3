@@ -1,12 +1,14 @@
-# MS2 Backend — Waves 1–3 (Employee hierarchy + contribution calculators)
+# MS2 Backend — Waves 1–4 (Employee hierarchy + contribution calculators + PayrollCalculator)
 
-> **Built:** 2026-10-26 (Mon) · backend only, **no GUI touched** (per Module 7: GUI is Week 9)
+> **Built:** 2026-10-26 (Mon) waves 1–3 · **Wave 4 (`PayrollCalculator`):** 2026-10-28 (Wed) — backend only,
+> **no GUI touched** (GUI rewiring is P5)
 > **Design source:** `MS1 Method Dictionary + CRC Cards` (graded 35/35) — every class and method
 > name below exists in the approved design. No invented identifiers.
-> **Verified:** `javac` 21.0.12, `-Xlint:all`, **0 warnings, 0 errors** · console harness **50/50 PASS** ·
-> CP2 parity **25/25 exact matches, 0 mismatches**.
+> **Verified:** `javac` 21.0.12, `-Xlint:all`, **0 warnings, 0 errors** · console harness **91/91 PASS**
+> (sections A–I) · CP2 parity: **25/25 documented deviations** (decision B — the OOP values follow the
+> official matrices; section H is the proof, `parity-report.txt` is the audit trail).
 
-## What is implemented (Wave 1–3 of the 5-wave build order)
+## What is implemented (Waves 1–4 of the 5-wave build order)
 
 | Class | Type | S1 methods implemented |
 |---|---|---|
@@ -21,10 +23,12 @@
 | `WithholdingTaxCalculator` | subclass | `calculate` — 6 BIR brackets, up to 35% |
 | `PayrollRecord` | **immutable** value object | 19-param constructor + 19 getters, **no setters** |
 | `AttendanceLog` | helper | `recordClockIn`, `recordClockOut`, `getDailyHours`, `getWorkedDays` |
-| `ConsoleBackendTest` | test harness (not production) | 50 assertions, prints PASS/FAIL, exit code 1 on failure |
+| `PayrollCalculator` | **service / orchestrator** | `calculatePayroll(Employee, AttendanceLog)` + the D2 period overload, `private calculateGross`, `private calculateNetPay` — one polymorphic loop over `List<GovernmentContributionCalculator>`, tax applied in a second phase |
+| `ConsoleBackendTest` | test harness (not production) | 91 assertions, prints PASS/FAIL, exit code 1 on failure |
 
-**Not built yet (next waves):** `PayrollCalculator` (Wave 4 — the orchestrator), `Credentials`,
-`LeaveRequest`, `LeaveManagement`, `HRManager`, and the whole GUI rewiring (Wave 5).
+**Not built yet (next waves):** `Credentials`, `LeaveRequest`, `LeaveManagement`, `HRManager`, and the
+whole GUI rewiring (Wave 5 / P5). The payroll path (attendance → gross → deductions → net) is complete
+in the backend.
 
 ## Documented adjustments (why the code differs from the sheet)
 
@@ -40,6 +44,14 @@
    attendance data was invented. The API is CSV-ready — an adapter needs no change to callers.
 4. **Constructors assign validated values directly** instead of calling their own setters, so a
    subclass never observes a half-constructed object (`-Xlint:this-escape` clean).
+5. **`private calculateGross` takes the period bounds explicitly** (`AttendanceLog, int employeeId,
+   double hourlyRate, String periodStart, String periodEnd`) instead of the 2-argument Method
+   Dictionary row. The formula is exactly the sheet's (`workedDays * hourlyRate * 8`); the extra
+   arguments only replace hidden state, because a private helper cannot know the payroll period
+   otherwise. The graded public surface (`calculatePayroll`) matches the sheet one-to-one.
+6. **`absences` is 0** in every `PayrollRecord`. There is no absence source in the repo yet (open
+   question Q3 — no `attendance.csv`), and inventing absence day counts would put fabricated numbers
+   on a payslip. `totalLeaves` comes from the employee's own `getAnnualLeaveCredits()`.
 
 ## Decision B — official matrix over CP2 (2026-10-27, decided by Paul)
 
@@ -55,11 +67,40 @@ Impact on the 34-employee sample (basic salary used as the proxy for gross): Phi
 SSS 4/34 (CP2 *under*-deducted PHP 22.50 each), Pag-IBIG 0/34 (all salaries are above the
 point where the PHP 100 cap flattens the difference).
 
+## P4 — `PayrollCalculator` orchestrator (2026-10-28)
+
+The payroll path is now one method: `calculatePayroll(employee, attendance, periodStart, periodEnd)`
+returns an immutable `PayrollRecord`. Nothing in this class asks which calculator or which employee type
+it is holding — `grep -c instanceof PayrollCalculator.java` = **0**.
+
+| Phase | What runs | Type it works with (S1 design) |
+|---|---|---|
+| gross | `workedDays * hourlyRate * 8` | `AttendanceLog` + `Employee` |
+| **phase 1** | SSS → PhilHealth → Pag-IBIG in **one loop** | `List<GovernmentContributionCalculator>` (abstract) |
+| **phase 2** | BIR withholding tax on `gross - phase 1` | `GovernmentContributionCalculator` (abstract) |
+| result | `new PayrollRecord(...)`, fully validated | immutable value object |
+
+Verified run (`console-test-output.txt`, section I, 20 June 2024 working days, hourly rate 205.36):
+
+| Field | Value | Where it comes from |
+|---|---|---|
+| gross income | **32,857.60** | 20 days × 205.36 × 8 |
+| hours worked | **160.00** | 20 days × 8 |
+| SSS | **1,125.00** | official cap |
+| PhilHealth | **492.864** | (300 + (32,857.60 − 10,000) × 3%) / 2 |
+| Pag-IBIG | **100.00** | official employee cap |
+| withholding tax | **2,061.35** | 20% of (31,139.736 − 20,833) |
+| **net pay** | **29,078.39** | gross − 3,779.21 deductions |
+
+Section I also proves: the result is immutable (no setters), two employee types price differently through
+one `Employee` parameter, the calculator list is injectable (SSS-only run changes only the SSS amount),
+KI-01 is refused, and the no-dates overload (D2) prices the most recent semi-monthly period.
+
 ## Known issues found by the console run
 
 | ID | Issue | Evidence | Status |
 |---|---|---|---|
-| **KI-01** | At gross pay **0.00** the statutory minimums still apply (SSS 135 + PhilHealth 150 = 285), so net pay would be **-285.00** (a negative payslip). The calculators refuse a negative taxable income instead. | `cp2-parity-output.txt` line `NET\|0.00\|435.000000\|-435.000000` (CP2, before the PhilHealth fix) | ❓ fix = decision **D3**: `PayrollCalculator.calculatePayroll` rejects a non-positive gross. Pending the P4 orchestrator. |
+| **KI-01** | At gross pay **0.00** the statutory minimums still apply (SSS 135 + PhilHealth 150 = 285), so net pay would be **-285.00** (a negative payslip). The calculators refuse a negative taxable income instead. | `cp2-parity-output.txt` line `NET\|0.00\|435.000000\|-435.000000` (CP2, before the PhilHealth fix) | ✅ **RESOLVED** (P4, 2026-10-28) — `PayrollCalculator.calculatePayroll` rejects a non-positive gross **before** any deduction runs (decision D3); section I asserts the refusal. A second guard rejects the case where statutory deductions would consume the whole gross, so a negative net can never reach `PayrollRecord`. |
 | **KI-02** | PhilHealth deducted **100% of the premium**; the official employee share is **50%** (`Home_Philhealth_Matrix.xlsx` note `A6`, SAMPLE `B10` = 375 on 25,000). Every payslip was over-deducted by 2x. | `Q4-matrix-verification.md` §2 | ✅ **RESOLVED** (B) — `PhilHealthCalculator` returns `premium / 2`; section H asserts 150 / 375 / 900 |
 | **KI-03** | Pag-IBIG deducted **employee + employer share** (3%/4%); the official employee share is **1%/2%**, cap 100 (`B2:B3` vs `D2:D3`, note `A5`). | `Q4-matrix-verification.md` §3 | ✅ **RESOLVED** (B) — `PagIbigCalculator` uses the employee rate only; salary < 1,000 stays 0.00 and UNVERIFIED (no matrix row) |
 | **KI-04** | Withholding tax bracket 1 used the excess base **20,832** instead of **20,833** (`B3`, SAMPLE `B20` = 513.40) → +PHP 0.20 over-withheld in [20,833, 33,333]. | `Q4-matrix-verification.md` §4 | ✅ **RESOLVED** (B) — `WithholdingTaxCalculator` uses 20,833 (and clamps the 20,832–20,833 gap so tax can never go negative) |

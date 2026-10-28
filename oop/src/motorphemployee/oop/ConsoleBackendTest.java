@@ -1,6 +1,7 @@
 package motorphemployee.oop;
 
 import java.lang.reflect.Method;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +59,9 @@ public final class ConsoleBackendTest {
 
         section("H. Official matrix conformance (decision B, 2026-10-27)");
         testOfficialMatrixConformance();
+
+        section("I. PayrollCalculator orchestrator - attendance in, immutable PayrollRecord out (P4)");
+        testPayrollCalculatorOrchestrator();
 
         System.out.println();
         System.out.println("=== SUMMARY: " + passed + " passed, " + failed + " failed ===");
@@ -358,6 +362,117 @@ public final class ConsoleBackendTest {
         checkCloseTo("WHT 33,333 (bracket 2 floor)", tax.calculate(33333.00), 2500.00);
         checkCloseTo("WHT 40,000", tax.calculate(40000.00), 4166.75);
         checkCloseTo("WHT 90,000", tax.calculate(90000.00), 17832.90);
+    }
+
+    // ------------------------------------------------------------------ I
+
+    /**
+     * P4 acceptance (decisions D1/D2/D3): proves the ORCHESTRATOR, not the individual calculators.
+     *
+     * Path under test: attendance days -> gross (workedDays * hourlyRate * 8) -> phase 1 statutory
+     * loop over List<GovernmentContributionCalculator> -> phase 2 tax on the taxable income -> net
+     * -> one immutable PayrollRecord. The same method is called with two different concrete
+     * employee types through the same Employee reference, and KI-01 can no longer create a
+     * negative payslip because a non-positive gross is rejected before any deduction runs.
+     */
+    private static void testPayrollCalculatorOrchestrator() {
+        AttendanceLog log = new AttendanceLog();
+        int regularId = 10001;
+        int probationaryId = 10034;
+        for (int day = 3; day <= 22; day++) {
+            String date = String.format(Locale.ROOT, "2024-06-%02d", day);
+            for (int employeeId : new int[]{regularId, probationaryId}) {
+                log.recordClockIn(employeeId, date, "08:00:00");
+                log.recordClockOut(employeeId, date, "17:00:00");
+            }
+        }
+
+        PayrollCalculator calculator = new PayrollCalculator();
+        System.out.println("  " + calculator);
+
+        Employee regular = new RegularEmployee(regularId, "Pore", "Paul", "1990-02-14", "Manila",
+                "09171234567", "34-1234567-8", "12-345678901-2", "123-456-789-000", "1234-5678-9012",
+                "Regular", "Software Engineer", "Valencia", 35000.00, 1500, 2000, 1000, 17500, 205.36, 3);
+        Employee probationary = new ProbationaryEmployee(probationaryId, "Racimo", "Ana", "1998-07-01",
+                "Quezon City", "09181234567", "34-9876543-2", "12-987654321-9", "987-654-321-000",
+                "9876-5432-1098", "Probationary", "Junior Developer", "Pore", 22000.00, 1000, 500, 800,
+                11000, 129.08, 5, "2026-06-01", 88.5);
+
+        PayrollRecord record = calculator.calculatePayroll(regular, log, "2024-06-01", "2024-06-30");
+        System.out.println("  " + record);
+        System.out.println("    hoursWorked = " + money(record.getHoursWorked())
+                + "  totalDeductions = " + money(record.getTotalDeductions()));
+
+        // gross = 20 worked days * 205.36 hourly rate * 8 - the same formula CP2 double-implemented
+        checkCloseTo("gross = 20 days * 205.36 * 8 (single implementation now)", record.getGrossIncome(), 32857.60);
+        checkCloseTo("hoursWorked = 20 days * 8", record.getHoursWorked(), 160.00);
+
+        // phase 1 - each statutory amount comes from the official matrix, not from CP2
+        checkCloseTo("phase 1 SSS at the official cap", record.getSSSContribution(), 1125.00);
+        checkCloseTo("phase 1 PhilHealth employee share (985.728 premium / 2)",
+                record.getPhilHealthContribution(), 492.864);
+        checkCloseTo("phase 1 Pag-IBIG employee share at the official cap", record.getPagIbigContribution(), 100.00);
+
+        // phase 2 - tax runs on the income already net of the three statutory deductions
+        double taxableIncome = 32857.60 - 1125.00 - 492.864 - 100.00;
+        checkCloseTo("phase 2 withholding tax on the taxable income (not on gross)",
+                record.getWithholdingTax(), (taxableIncome - 20833.00) * 0.20);
+        checkCloseTo("net = gross - (sss + philhealth + pagibig + tax)",
+                record.getNetIncome(), 32857.60 - record.getTotalDeductions());
+        checkCloseTo("getTotalDeductions() = the four amounts",
+                record.getTotalDeductions(),
+                record.getSSSContribution() + record.getPhilHealthContribution()
+                        + record.getPagIbigContribution() + record.getWithholdingTax());
+
+        // immutability - the result cannot be edited after the computation
+        boolean setterFound = false;
+        for (Method method : PayrollRecord.class.getDeclaredMethods()) {
+            if (method.getName().startsWith("set")) {
+                setterFound = true;
+            }
+        }
+        check("the returned PayrollRecord has no setters (immutable result)", !setterFound);
+
+        // polymorphism - same call, two types, no if/else on employee type anywhere in the flow
+        PayrollRecord probationaryRecord =
+                calculator.calculatePayroll(probationary, log, "2024-06-01", "2024-06-30");
+        check("two employee types through ONE Employee parameter give different benefits",
+                record.getRiceSubsidy() == 1500.0 && probationaryRecord.getRiceSubsidy() == 1000.0);
+        check("each record is priced with its own hourly rate (205.36 vs 129.08)",
+                Math.abs(probationaryRecord.getGrossIncome() - 20 * 129.08 * 8) < 0.005);
+
+        // composition - the calculator list is injectable, so a payroll variant needs no edit here
+        List<GovernmentContributionCalculator> sssOnly = new ArrayList<>();
+        sssOnly.add(new SSSCalculator());
+        PayrollRecord sssOnlyRecord = new PayrollCalculator(sssOnly, new WithholdingTaxCalculator())
+                .calculatePayroll(regular, log, "2024-06-01", "2024-06-30");
+        check("injected calculator list changes only the amounts it contains (SSS only)",
+                sssOnlyRecord.getSSSContribution() == record.getSSSContribution()
+                        && sssOnlyRecord.getPhilHealthContribution() == 0.0
+                        && sssOnlyRecord.getPagIbigContribution() == 0.0);
+
+        // KI-01 / decision D3 - a non-positive gross is rejected instead of producing a payslip
+        AttendanceLog emptyLog = new AttendanceLog();
+        expectThrows("KI-01: zero attendance is rejected (no -285.00 payslip)",
+                () -> calculator.calculatePayroll(regular, emptyLog, "2024-06-01", "2024-06-30"));
+        expectThrows("periodStart after periodEnd rejected",
+                () -> calculator.calculatePayroll(regular, log, "2024-06-30", "2024-06-01"));
+        expectThrows("malformed period date rejected",
+                () -> calculator.calculatePayroll(regular, log, "06/01/2024", "2024-06-30"));
+        expectThrows("null attendance rejected", () -> calculator.calculatePayroll(regular, null));
+        expectThrows("empty calculator list rejected", () -> new PayrollCalculator(new ArrayList<>(),
+                new WithholdingTaxCalculator()));
+
+        // D2 - the overload without dates uses the most recent semi-monthly period
+        String today = LocalDate.now().toString();
+        AttendanceLog todayLog = new AttendanceLog();
+        todayLog.recordClockIn(regularId, today, "08:00:00");
+        todayLog.recordClockOut(regularId, today, "17:00:00");
+        PayrollRecord defaultPeriodRecord = calculator.calculatePayroll(regular, todayLog);
+        checkCloseTo("D2: overload without dates prices today's 8 hours",
+                defaultPeriodRecord.getGrossIncome(), 205.36 * 8);
+        check("D2: the default period ends today",
+                defaultPeriodRecord.getPeriodEnd().toLocalDate().toString().equals(today));
     }
 
     // ------------------------------------------------------------- helpers
