@@ -53,6 +53,15 @@ The GUI rewiring is complete (commit `942aa9d`): `MainMenu` and `Dashboard` call
 6. **`absences` is 0** in every `PayrollRecord`. There is no absence source in the repo yet (open
    open question — no `attendance.csv`), and inventing absence day counts would put fabricated numbers
    on a payslip. `totalLeaves` comes from the employee's own `getAnnualLeaveCredits()`.
+7. **The GUI builds the subclass that matches the status column** (2026-10-30). `MainMenu` and
+   `Dashboard` used to construct `RegularEmployee` for every row, so the polymorphic benefit methods
+   returned permanent-staff values (1,500 / 2,000 / 12) for the 11 probationary employees. Both
+   screens now branch on `status`. The data file carries no probation start date, evaluation score or
+   months served, so a probationary record is built with neutral placeholders: **6 months** (the
+   standard probation period under Labor Code Art. 281), **`"N/A"`** for the start date (the same
+   convention the data file already uses for an unknown supervisor) and **0** for a score that has not
+   been evaluated yet. None of those three values reaches the payslip; the payslip still prints the
+   allowance columns exactly as before, so displayed values and gross pay are unchanged.
 
 ## Official matrices over the old program (2026-10-27)
 
@@ -106,6 +115,20 @@ Issue 1 is refused, and the no-dates overload prices the most recent semi-monthl
 | **Issue 3** | Pag-IBIG deducted **employee + employer share** (3%/4%); the official employee share is **1%/2%**, cap 100 (`B2:B3` vs `D2:D3`, note `A5`). | `matrix-verification.md` §3 | ✅ **RESOLVED** — `PagIbigCalculator` uses the employee rate only; salary < 1,000 stays 0.00 and UNVERIFIED (no matrix row) |
 | **Issue 4** | Withholding tax bracket 1 used the excess base **20,832** instead of **20,833** (`B3`, SAMPLE `B20` = 513.40) → +PHP 0.20 over-withheld in [20,833, 33,333]. | `matrix-verification.md` §4 | ✅ **RESOLVED** — `WithholdingTaxCalculator` uses 20,833 (and clamps the 20,832–20,833 gap so tax can never go negative) |
 | **Issue 5** | SSS brackets were **upper-inclusive**; the official schedule is **lower-inclusive** ("3,250 - 3,749.99"), so a salary exactly on a boundary was under-deducted by PHP 22.50. | `matrix-verification.md` §1 | ✅ **RESOLVED** — `SSSCalculator` treats bracket *i* as `[lower, lower + 499.99)`; section H asserts 3,250 → 157.50 |
+
+## GUI subclass fix (2026-10-30)
+
+The payslip never showed the wrong benefit values, because it prints the allowance columns from the
+data file, not the computed record — so a smoke test could not catch this. The defect was in the
+object the screens built: `new RegularEmployee(...)` for every employee, probationary or not.
+
+| What | Evidence |
+|---|---|
+| Before | one `new motorphemployee.oop.RegularEmployee(` per screen, zero `ProbationaryEmployee` |
+| After | both screens branch on the `status` column; one `ProbationaryEmployee` construction each |
+| Construction check | all 34 rows: 23 `RegularEmployee` + 11 `ProbationaryEmployee`, 0 failures; probationary rows report 1,000 / 500 / 6 and not promotable |
+| GUI re-run | employee 21 (Probationary) completed **View Salary** with no error dialog, 30 Oct 2026 |
+| No regression | gross parity **408/408** comparisons, 0 mismatches, worst delta **0.0** |
 
 ## How to build and run (verified commands)
 

@@ -1011,17 +1011,39 @@ public class Dashboard extends javax.swing.JFrame {
             // selected month (2024 reference calendar) so the backend derives the same gross.
             motorphemployee.oop.PayrollRecord payslip;
             try {
-                motorphemployee.oop.Employee payrollEmployee = new motorphemployee.oop.RegularEmployee(
-                        Integer.parseInt(employeeNumber.trim()), lastName, firstName,
-                        birthday, address, phoneNumber,
-                        sssNumber, philhealthNumber, tinNumber, pagibigNumber,
-                        status, position, supervisor,
-                        Double.parseDouble(basicSalaryStr),
-                        Double.parseDouble(riceSubsidyStr),
-                        Double.parseDouble(phoneAllowanceStr),
-                        Double.parseDouble(clothingAllowanceStr),
-                        Double.parseDouble(grossSemiMonthlyRateStr),
-                        hourlyRate, 0);
+                // Instantiate the subclass that matches the employee's status, so the
+                // polymorphic benefit methods return this employee's own values.
+                // The data file carries no probation start date, evaluation score or months
+                // served, so a probationary record gets neutral placeholders: the standard
+                // six-month probation period (Labor Code Art. 281), "N/A" for the start date
+                // (the same convention the data file uses for an unknown supervisor), and 0
+                // for a score that has not been evaluated yet.
+                motorphemployee.oop.Employee payrollEmployee;
+                if ("Probationary".equalsIgnoreCase(status.trim())) {
+                    payrollEmployee = new motorphemployee.oop.ProbationaryEmployee(
+                            Integer.parseInt(employeeNumber.trim()), lastName, firstName,
+                            birthday, address, phoneNumber,
+                            sssNumber, philhealthNumber, tinNumber, pagibigNumber,
+                            status, position, supervisor,
+                            Double.parseDouble(basicSalaryStr),
+                            Double.parseDouble(riceSubsidyStr),
+                            Double.parseDouble(phoneAllowanceStr),
+                            Double.parseDouble(clothingAllowanceStr),
+                            Double.parseDouble(grossSemiMonthlyRateStr),
+                            hourlyRate, 6, "N/A", 0);
+                } else {
+                    payrollEmployee = new motorphemployee.oop.RegularEmployee(
+                            Integer.parseInt(employeeNumber.trim()), lastName, firstName,
+                            birthday, address, phoneNumber,
+                            sssNumber, philhealthNumber, tinNumber, pagibigNumber,
+                            status, position, supervisor,
+                            Double.parseDouble(basicSalaryStr),
+                            Double.parseDouble(riceSubsidyStr),
+                            Double.parseDouble(phoneAllowanceStr),
+                            Double.parseDouble(clothingAllowanceStr),
+                            Double.parseDouble(grossSemiMonthlyRateStr),
+                            hourlyRate, 0);
+                }
                 motorphemployee.oop.AttendanceLog attendanceLog = new motorphemployee.oop.AttendanceLog();
                 String monthNo = String.format("%02d", index + 1);
                 for (int day = 1; day <= workedDays; day++) {
