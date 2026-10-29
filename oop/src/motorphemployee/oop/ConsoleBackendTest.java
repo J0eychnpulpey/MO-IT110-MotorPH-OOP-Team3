@@ -16,8 +16,7 @@ import java.util.Locale;
  * when anything fails, so a broken build cannot be mistaken for a working one.
  *
  * The PARITY lines are machine-comparable with the CP2 baseline: the same input salary is
- * pushed through the CP2 static formulas (Cp2Parity) and through the OOP calculators. Since
- * Since 2026-10-27 the OOP values follow the OFFICIAL government matrices, so a CP2
+ * pushed through the CP2 static formulas (Cp2Parity) and through the OOP calculators. Since 2026-10-27 the OOP values follow the OFFICIAL government matrices, so a CP2
  * mismatch is EXPECTED and documented (oop/matrix-verification.md) - section H proves the
  * OOP numbers against the official values instead.
  */
