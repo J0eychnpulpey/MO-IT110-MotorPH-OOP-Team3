@@ -17,8 +17,8 @@ import java.util.Locale;
  *
  * The PARITY lines are machine-comparable with the CP2 baseline: the same input salary is
  * pushed through the CP2 static formulas (Cp2Parity) and through the OOP calculators. Since
- * decision B (2026-10-27) the OOP values follow the OFFICIAL government matrices, so a CP2
- * mismatch is EXPECTED and documented (oop/Q4-matrix-verification.md) - section H proves the
+ * Since 2026-10-27 the OOP values follow the OFFICIAL government matrices, so a CP2
+ * mismatch is EXPECTED and documented (oop/matrix-verification.md) - section H proves the
  * OOP numbers against the official values instead.
  */
 public final class ConsoleBackendTest {
@@ -49,18 +49,18 @@ public final class ConsoleBackendTest {
         section("F. Attendance -> gross -> deductions -> net (end-to-end backend run)");
         testEndToEndNetPay();
 
-        section("G. Known issue KI-01 surfaced by this run (Week 8 fix decision)");
+        section("G. Known issue surfaced by this run: negative net pay");
         System.out.println("  At gross pay 0.00 the statutory minimums are still charged:");
         System.out.println("    SSS = 135.00 + PhilHealth = 150.00 + Pag-IBIG = 0.00  ->  285.00 of deductions");
         System.out.println("  CP2 behaviour : tax on -285.00 = 0.00, so net pay = -285.00 (a negative payslip)");
         System.out.println("  OOP behaviour : the calculators refuse a negative taxable income instead");
-        System.out.println("  -> logged as KI-01; the fix (decision D3) is a non-positive gross rejected by");
+        System.out.println("  -> logged as an open issue; the fix is a non-positive gross rejected by");
         System.out.println("     PayrollCalculator.calculatePayroll before any deduction is applied.");
 
-        section("H. Official matrix conformance (decision B, 2026-10-27)");
+        section("H. Official matrix conformance (2026-10-27)");
         testOfficialMatrixConformance();
 
-        section("I. PayrollCalculator orchestrator - attendance in, immutable PayrollRecord out (P4)");
+        section("I. PayrollCalculator orchestrator - attendance in, immutable PayrollRecord out");
         testPayrollCalculatorOrchestrator();
 
         System.out.println();
@@ -199,7 +199,7 @@ public final class ConsoleBackendTest {
         check("WithholdingTaxCalculator never negative in the 20,832-20,833 gap",
                 new WithholdingTaxCalculator().calculate(20832.50) >= 0.0);
         expectThrows("calculate(-1) rejected by every calculator", () -> new SSSCalculator().calculate(-1));
-        expectThrows("negative taxable income refused instead of paying a negative net (KI-01)",
+        expectThrows("negative taxable income refused instead of paying a negative net",
                 () -> new WithholdingTaxCalculator().calculate(-435.0));
     }
 
@@ -328,7 +328,7 @@ public final class ConsoleBackendTest {
     // ------------------------------------------------------------------ H
 
     /**
-     * Decision B (2026-10-27): every expected value below is copied from the official matrix
+     * Since 2026-10-27 every expected value below is copied from the official matrix
      * (or from its SAMPLE block), not from CP2. Sources: Home_SSS_Matrix.xlsx, sheet
      * "SSS Contribution Schedule"; Home_Philhealth_Matrix.xlsx (note A6, SAMPLE B10);
      * Home_PagIBIG_Matrix.xlsx (B2/B3 employee rates, cap note A5);
@@ -367,12 +367,12 @@ public final class ConsoleBackendTest {
     // ------------------------------------------------------------------ I
 
     /**
-     * P4 acceptance (decisions D1/D2/D3): proves the ORCHESTRATOR, not the individual calculators.
+     * Orchestrator acceptance (two-phase loop, period overload, non-positive gross): proves the ORCHESTRATOR, not the individual calculators.
      *
      * Path under test: attendance days -> gross (workedDays * hourlyRate * 8) -> phase 1 statutory
      * loop over List<GovernmentContributionCalculator> -> phase 2 tax on the taxable income -> net
      * -> one immutable PayrollRecord. The same method is called with two different concrete
-     * employee types through the same Employee reference, and KI-01 can no longer create a
+     * employee types through the same Employee reference, and a negative payslip can no longer be created from
      * negative payslip because a non-positive gross is rejected before any deduction runs.
      */
     private static void testPayrollCalculatorOrchestrator() {
@@ -451,9 +451,9 @@ public final class ConsoleBackendTest {
                         && sssOnlyRecord.getPhilHealthContribution() == 0.0
                         && sssOnlyRecord.getPagIbigContribution() == 0.0);
 
-        // KI-01 / decision D3 - a non-positive gross is rejected instead of producing a payslip
+        // Issue 1 - a non-positive gross is rejected instead of producing a payslip
         AttendanceLog emptyLog = new AttendanceLog();
-        expectThrows("KI-01: zero attendance is rejected (no -285.00 payslip)",
+        expectThrows("zero attendance is rejected (no -285.00 payslip)",
                 () -> calculator.calculatePayroll(regular, emptyLog, "2024-06-01", "2024-06-30"));
         expectThrows("periodStart after periodEnd rejected",
                 () -> calculator.calculatePayroll(regular, log, "2024-06-30", "2024-06-01"));
@@ -463,15 +463,15 @@ public final class ConsoleBackendTest {
         expectThrows("empty calculator list rejected", () -> new PayrollCalculator(new ArrayList<>(),
                 new WithholdingTaxCalculator()));
 
-        // D2 - the overload without dates uses the most recent semi-monthly period
+        // Overload without dates - uses the most recent semi-monthly period
         String today = LocalDate.now().toString();
         AttendanceLog todayLog = new AttendanceLog();
         todayLog.recordClockIn(regularId, today, "08:00:00");
         todayLog.recordClockOut(regularId, today, "17:00:00");
         PayrollRecord defaultPeriodRecord = calculator.calculatePayroll(regular, todayLog);
-        checkCloseTo("D2: overload without dates prices today's 8 hours",
+        checkCloseTo("overload without dates prices today's 8 hours",
                 defaultPeriodRecord.getGrossIncome(), 205.36 * 8);
-        check("D2: the default period ends today",
+        check("the default period ends today",
                 defaultPeriodRecord.getPeriodEnd().toLocalDate().toString().equals(today));
     }
 

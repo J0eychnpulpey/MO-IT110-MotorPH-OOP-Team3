@@ -8,10 +8,10 @@ package motorphemployee.oop;
  * Home_SSS_Matrix.xlsx (sheet "SSS Contribution Schedule"): lower bound 3,250 stepping by 500,
  * contribution 157.50 stepping by 22.50, "below 3,250" = 135.00, "over 24,750" = 1,125.00.
  *
- * Decision B (2026-10-27): the official ranges are LOWER-bound inclusive ("3,250 - 3,749.99"),
+ * Official matrix (2026-10-27): the official ranges are LOWER-bound inclusive ("3,250 - 3,749.99"),
  * so bracket i covers [lower, lower + 499.99]. CP2 used an upper-bound inclusive `<=` chain,
  * which under-deducted PHP 22.50 whenever the salary landed exactly on a bracket boundary -
- * KI-05 in oop/Q4-matrix-verification.md.
+ * Issue 5 in oop/matrix-verification.md.
  */
 public class SSSCalculator extends GovernmentContributionCalculator {
 

@@ -17,25 +17,25 @@ import java.util.Map;
  *
  * This class is the refactored home of the payroll logic that CP2 copy-pasted into BOTH
  * MainMenu (1,558 lines) and Dashboard (1,442 lines) - four calculate*() formulas, twice. After the
- * GUI rewiring (P5) there is exactly one implementation of each formula in the whole project.
+ * After the GUI rewiring there is exactly one implementation of each formula in the whole project.
  *
  * Uses abstraction, not concrete types: the statutory deductions are held as
  * List<GovernmentContributionCalculator>, so a new deduction is a new subclass plus one line in
  * the constructor - this class never changes and never asks "which calculator are you?".
  *
- * Two phases (decision D1 in the MS2 Refactoring Plan):
+ * Two phases (Refactoring Plan design):
  *   phase 1 - SSS, PhilHealth, Pag-IBIG are computed on GROSS pay (one polymorphic loop)
  *   phase 2 - withholding tax is computed on the TAXABLE income (gross minus phase 1)
  *
- * Decision B (2026-10-27, Paul): the four calculators follow the OFFICIAL government matrices, not
- * CP2, so a CP2 mismatch is expected and documented in oop/Q4-matrix-verification.md.
+ * Official matrices (2026-10-27): the four calculators follow the OFFICIAL government matrices, not
+ * CP2, so a CP2 mismatch is expected and documented in oop/matrix-verification.md.
  */
 public class PayrollCalculator {
 
     /** Standard MotorPH work day used by CP2 (MainMenu.java:1090: workedDays * hourlyRate * 8). */
     private static final double HOURS_PER_WORK_DAY = 8.0;
 
-    /** Default payroll period length when the caller does not pass an explicit one (D2). */
+    /** Default payroll period length when the caller does not pass an explicit one. */
     private static final int DEFAULT_PERIOD_DAYS = 15;
 
     private static final ZoneId PAYROLL_ZONE = ZoneId.of("Asia/Manila");
@@ -77,7 +77,7 @@ public class PayrollCalculator {
     // ---------------------------------------------------------------- public API
 
     /**
-     * Payroll for the most recent semi-monthly period (D2 overload without dates).
+     * Payroll for the most recent semi-monthly period (overload without dates).
      * Same computation as the 4-argument overload - only the period differs.
      */
     public PayrollRecord calculatePayroll(Employee employee, AttendanceLog attendance) {
@@ -93,7 +93,7 @@ public class PayrollCalculator {
      * Payroll for an explicit period - the single public entry point of the whole computation.
      *
      * @throws IllegalArgumentException when the employee or attendance is missing, when the period
-     *         is invalid, when the computed gross pay is not positive (KI-01 fix / decision D3), or
+     *         is invalid, when the computed gross pay is not positive (Issue 1 fix), or
      *         when the statutory deductions would consume the entire gross pay.
      */
     public PayrollRecord calculatePayroll(Employee employee,
@@ -114,7 +114,7 @@ public class PayrollCalculator {
         int workedDays = attendance.getWorkedDays(employeeId, periodStart, periodEnd);
         double grossIncome = calculateGross(attendance, employeeId, hourlyRate, periodStart, periodEnd);
 
-        // KI-01 / decision D3: a non-positive gross pay must never reach the deduction tables,
+        // Issue 1: a non-positive gross pay must never reach the deduction tables,
         // otherwise the statutory minimums turn a 0.00 payslip into a negative one.
         if (!(grossIncome > 0)) {
             throw new IllegalArgumentException("cannot compute payroll for employee " + employeeId
@@ -171,7 +171,7 @@ public class PayrollCalculator {
                 employee.getAnnualLeaveCredits(),
                 workedDays * HOURS_PER_WORK_DAY,
                 hourlyRate,
-                0L);                 // absences: no attendance.csv yet (open question Q3), never invented
+                0L);                 // absences: no attendance.csv yet (open question), never invented
     }
 
     @Override

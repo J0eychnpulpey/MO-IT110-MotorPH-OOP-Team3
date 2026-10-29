@@ -83,7 +83,7 @@ java.version = 21.0.12.1
   PASS  WithholdingTaxCalculator 0 at/below 20832
   PASS  WithholdingTaxCalculator never negative in the 20,832-20,833 gap
   PASS  calculate(-1) rejected by every calculator  -> IllegalArgumentException: SSS Contribution: invalid salary -1.0
-  PASS  negative taxable income refused instead of paying a negative net (KI-01)  -> IllegalArgumentException: Withholding Tax: invalid salary -435.0
+  PASS  negative taxable income refused instead of paying a negative net  -> IllegalArgumentException: Withholding Tax: invalid salary -435.0
 --- D. AttendanceLog integrity
   daily hours 2024-06-03 = 9.0
   daily hours 2024-06-04 = 8.5
@@ -99,7 +99,7 @@ java.version = 21.0.12.1
   PASS  future-dated clock-in rejected  -> IllegalArgumentException: cannot clock in on a future date: 2099-01-01
   PASS  unknown employee rejected  -> IllegalArgumentException: employeeId must be positive: 0
 --- E. PayrollRecord immutability + internal consistency
-  PayrollRecord{employee=10001, period=2026-10-13..2026-10-28, gross=35000.00, sss=1125.00, philhealth=750.00, pagibig=100.00, tax=2025.00, net=31000.00}
+  PayrollRecord{employee=10001, period=2026-10-15..2026-10-30, gross=35000.00, sss=1125.00, philhealth=750.00, pagibig=100.00, tax=2025.00, net=31000.00}
   PASS  PayrollRecord keeps netIncome
   PASS  getTotalDeductions() == 4000
   PASS  PayrollRecord has no setters (immutable)
@@ -120,14 +120,14 @@ java.version = 21.0.12.1
   PASS  gross == 20 * 12 * 8
   PASS  net pay == gross - all deductions
   PASS  net pay is positive and lower than gross
---- G. Known issue KI-01 surfaced by this run (Week 8 fix decision)
+--- G. Known issue surfaced by this run: negative net pay
   At gross pay 0.00 the statutory minimums are still charged:
     SSS = 135.00 + PhilHealth = 150.00 + Pag-IBIG = 0.00  ->  285.00 of deductions
   CP2 behaviour : tax on -285.00 = 0.00, so net pay = -285.00 (a negative payslip)
   OOP behaviour : the calculators refuse a negative taxable income instead
-  -> logged as KI-01; the fix (decision D3) is a non-positive gross rejected by
+  -> logged as an open issue; the fix is a non-positive gross rejected by
      PayrollCalculator.calculatePayroll before any deduction is applied.
---- H. Official matrix conformance (decision B, 2026-10-27)
+--- H. Official matrix conformance (2026-10-27)
   PASS  SSS below the table (3,249.99)  = 135.00
   PASS  SSS first bracket is LOWER-bound inclusive (3,250)  = 157.50
   PASS  SSS 5,000  = 225.00
@@ -148,7 +148,7 @@ java.version = 21.0.12.1
   PASS  WHT 33,333 (bracket 2 floor)  = 2,500.00
   PASS  WHT 40,000  = 4,166.75
   PASS  WHT 90,000  = 17,832.90
---- I. PayrollCalculator orchestrator - attendance in, immutable PayrollRecord out (P4)
+--- I. PayrollCalculator orchestrator - attendance in, immutable PayrollRecord out
   PayrollCalculator{statutory=[SSS Contribution (SSS, active), PhilHealth Contribution (PH, active), Pag-IBIG Contribution (PAGIBIG, active)], tax=Withholding Tax (TAX, active)}
   PayrollRecord{employee=10001, period=2024-06-01..2024-06-30, gross=32857.60, sss=1125.00, philhealth=492.86, pagibig=100.00, tax=2061.35, net=29078.39}
     hoursWorked = 160.00  totalDeductions = 3,779.21
@@ -164,13 +164,13 @@ java.version = 21.0.12.1
   PASS  two employee types through ONE Employee parameter give different benefits
   PASS  each record is priced with its own hourly rate (205.36 vs 129.08)
   PASS  injected calculator list changes only the amounts it contains (SSS only)
-  PASS  KI-01: zero attendance is rejected (no -285.00 payslip)  -> IllegalArgumentException: cannot compute payroll for employee 10001: gross pay is 0.0 because 0 day(s) of attendance were found in 2024-06-01..2024-06-30
+  PASS  zero attendance is rejected (no -285.00 payslip)  -> IllegalArgumentException: cannot compute payroll for employee 10001: gross pay is 0.0 because 0 day(s) of attendance were found in 2024-06-01..2024-06-30
   PASS  periodStart after periodEnd rejected  -> IllegalArgumentException: periodEnd cannot be before periodStart: 2024-06-30 -> 2024-06-01
   PASS  malformed period date rejected  -> IllegalArgumentException: periodStart must be yyyy-MM-dd: 06/01/2024
   PASS  null attendance rejected  -> IllegalArgumentException: attendance is required
   PASS  empty calculator list rejected  -> IllegalArgumentException: at least one statutory calculator is required
-  PASS  D2: overload without dates prices today's 8 hours  = 1,642.88
-  PASS  D2: the default period ends today
+  PASS  overload without dates prices today's 8 hours  = 1,642.88
+  PASS  the default period ends today
 
 === SUMMARY: 91 passed, 0 failed ===
 RESULT: PASS

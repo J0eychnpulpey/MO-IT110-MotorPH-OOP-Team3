@@ -5,11 +5,11 @@ package motorphemployee.oop;
  * floor and a PHP 1,800 ceiling), so the deduction runs from PHP 150 to PHP 900
  * (MS1 Week 3 CRC: "PhilHealthCalculator (Concrete Subclass)").
  *
- * Decision B (2026-10-27): the premium formula is carried over from CP2 unchanged, but the
+ * Official matrix (2026-10-27): the premium formula is carried over from CP2 unchanged, but the
  * EMPLOYEE SHARE is applied. The official matrix states the premium is equally shared between
  * employee and employer (Home_Philhealth_Matrix.xlsx note A6; SAMPLE B10 = 375 on a 25,000
  * basic salary). CP2 returned the full premium, which over-deducted every payslip by 2x -
- * logged as KI-02 in oop/Q4-matrix-verification.md.
+ * logged as Issue 2 in oop/matrix-verification.md.
  */
 public class PhilHealthCalculator extends GovernmentContributionCalculator {
 

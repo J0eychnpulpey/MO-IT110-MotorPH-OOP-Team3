@@ -90,7 +90,7 @@ The repository opens directly in **Eclipse** (`.project` / `.classpath` are incl
 | `oop/console-test-output.txt` | Console suite output — 91 of 91 checks pass |
 | `oop/cp2-parity-output.txt` | The CP2 baseline output the refactor is compared against |
 | `oop/parity-report.txt` | Gross pay for all 34 employees × 12 months — 408 comparisons, 0 differences |
-| `oop/Q4-matrix-verification.md` | The four statutory deductions checked against the official government matrices |
+| `oop/matrix-verification.md` | The four statutory deductions checked against the official government matrices |
 | `oop/NOTES.md` | Scope, documented deviations from the CP2 formulas, and open items |
 
 **Documented deviation:** the four statutory deductions follow the official government matrices. Where that differs from the CP2 formulas the difference is intentional and documented in `oop/NOTES.md` and in the MS2 Known Issues list — gross pay itself is unchanged for all 408 employee-months.

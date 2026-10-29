@@ -15,7 +15,7 @@ import java.util.Map;
  * must come before clock-out, hours never exceed 24 per day, and no future-dated records.
  * Callers only get read-only summaries - there is no way to edit a saved record.
  *
- * Storage note (open question Q3 in the MS2 Refactoring Plan): CP2 hardcoded a
+ * Storage note (open question in the Refactoring Plan): CP2 hardcoded a
  * workingDays[] array (MainMenu.java:1066) and no timecard CSV has been imported yet, so
  * this class keeps the records in memory. The public API is CSV-ready: an adapter that
  * feeds rows from attendance.csv needs no change to PayrollCalculator. No attendance data

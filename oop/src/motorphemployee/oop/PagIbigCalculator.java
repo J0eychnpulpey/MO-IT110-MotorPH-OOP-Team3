@@ -4,10 +4,10 @@ package motorphemployee.oop;
  * PagIbigCalculator - Pag-IBIG EMPLOYEE share, tiered, with a PHP 100 cap
  * (MS1 Week 3 CRC: "PagIbigCalculator (Concrete Subclass)").
  *
- * Decision B (2026-10-27): only the employee share is deducted - 1% for 1,000-1,500 and 2%
+ * Official matrix (2026-10-27): only the employee share is deducted - 1% for 1,000-1,500 and 2%
  * above 1,500, capped at 100 (Home_PagIBIG_Matrix.xlsx B2/B3 employee rates vs D2/D3 totals,
  * cap note A5). CP2 added the employer share (2%) and deducted the total 3%/4% from the
- * employee; that is KI-03 in oop/Q4-matrix-verification.md.
+ * employee; that is Issue 3 in oop/matrix-verification.md.
  *
  * Salary below 1,000 has no row in the official matrix, so it returns 0.00 and stays
  * UNVERIFIED rather than guessing a rate.

@@ -1,4 +1,4 @@
-# Q4 — Matrix verification (official vs CP2 vs OOP)
+# Matrix verification (official vs CP2 vs OOP)
 
 > Scope: 4 deduction formulas (SSS · PhilHealth · Pag-IBIG · Withholding Tax) checked against the 4 official xlsx matrices in `C:\Users\Paul\Documents\MotorPH Files\`.
 > Source of "CP2" values: verbatim copy of the 4 static methods from `src/motorphemployee/Dashboard.java:1195–1356` (run under JDK 21). Source of "OOP" values: `oop/src/motorphemployee/oop/*.java` compiled with `javac -Xlint:all` (0 warnings), run through the same harness. CP2 and OOP agree on **all 66 inputs tested** (`run.txt`), so the OOP columns are identical to CP2 by construction.
@@ -217,9 +217,9 @@ Boundary points:
 
 **1. SSS table match?** **YES for the bracket amounts; NO at exact boundaries.** Official `D3:D46` = CP2/OOP at every non-boundary value (16/16 base inputs). At the 44 exact lower bounds (3,250; 3,750; …; 24,750) CP2 uses the lower bracket (`<=`), the matrix uses the upper one (`A3 = 3,250 … 'to 3,749.99'`). Evidence: §1(d)/(e).
 
-**2. PhilHealth formula?** **Formula YES, employee share NO.** Premium `max(300, 3%·s)` capped at 1,800 matches the matrix premium exactly. But the matrix says the premium is *equally shared* (`A6`) and the SAMPLE `B10` = 375 = 50% of 750. CP2 deducts 100% (750). This is the cause of KI-02 — the hypothesis "300 + 3% of excess" was mathematically the same formula, so the real gap is the 50%.
+**2. PhilHealth formula?** **Formula YES, employee share NO.** Premium `max(300, 3%·s)` capped at 1,800 matches the matrix premium exactly. But the matrix says the premium is *equally shared* (`A6`) and the SAMPLE `B10` = 375 = 50% of 750. CP2 deducts 100% (750). This is the cause of Issue 2 — the hypothesis "300 + 3% of excess" was mathematically the same formula, so the real gap is the 50%.
 
-**3. Pag-IBIG employer share?** **YES — CP2 includes the employer share in the employee deduction.** CP2 adds 2% employer to the 1%/2% employee rate (total 3%/4%) and deducts the whole thing from the employee. Official employee share is 1% / 2%. Evidence: `Home_PagIBIG_Matrix.xlsx` `B2:B3` vs `D2:D3`; `Dashboard.java:1014`. **Note: this is the opposite of the KI-03 hypothesis** — CP2 is *higher* than official, not lower.
+**3. Pag-IBIG employer share?** **YES — CP2 includes the employer share in the employee deduction.** CP2 adds 2% employer to the 1%/2% employee rate (total 3%/4%) and deducts the whole thing from the employee. Official employee share is 1% / 2%. Evidence: `Home_PagIBIG_Matrix.xlsx` `B2:B3` vs `D2:D3`; `Dashboard.java:1014`. **Note: this is the opposite of the Issue 3 hypothesis** — CP2 is *higher* than official, not lower.
 
 **4. Tax brackets?** **NO, by ₱0.20 in one bracket.** Brackets 2–6 match. Bracket 1 uses 20,832 instead of 20,833 as the excess base (matrix `A3` and SAMPLE `B20`/`B21`). Evidence: §4 "Deviation" and the 513.40 sample.
 

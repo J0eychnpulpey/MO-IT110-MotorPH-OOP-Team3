@@ -168,8 +168,8 @@ Keep these in sync with the worksheet — they are the proof quoted in the MS2 t
 | `oop/console-test-output.txt` | Backend assertions (91/91 PASS, sections A–I) |
 | `oop/parity-report.txt` | OOP vs CP2 computation comparison |
 | `oop/cp2-parity-output.txt` | Raw CP2 reference output |
-| `oop/Q4-matrix-verification.md` | The four statutory formulas checked against the official matrices (per-input tables) |
-| `oop/NOTES.md` | Scope, adjustments, known issues (KI-01 …) |
+| `oop/matrix-verification.md` | The four statutory formulas checked against the official matrices (per-input tables) |
+| `oop/NOTES.md` | Scope, adjustments, known issues (Issues 1 to 5) |
 
 ---
 

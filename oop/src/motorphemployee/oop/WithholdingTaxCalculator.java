@@ -7,9 +7,9 @@ package motorphemployee.oop;
  * Applied AFTER SSS/PhilHealth/Pag-IBIG, so the input is the salary already net of those
  * three contributions - same as CP2 MainMenu.java:1418 / Dashboard.java:1334.
  *
- * Decision B (2026-10-27): bracket 1 uses the official excess base of 20,833, not CP2's
+ * Official matrix (2026-10-27): bracket 1 uses the official excess base of 20,833, not CP2's
  * 20,832 (Home_WithholdingTax_Matrix.xlsx bracket text B3 and SAMPLE B20: taxable 23,400 ->
- * 513.40). CP2 over-withheld PHP 0.20 for every taxable income in [20,833, 33,333] - KI-04.
+ * 513.40). CP2 over-withheld PHP 0.20 for every taxable income in [20,833, 33,333] - Issue 4.
  * Brackets 2-6 were already exact and are unchanged.
  */
 public class WithholdingTaxCalculator extends GovernmentContributionCalculator {

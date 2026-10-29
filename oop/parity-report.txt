@@ -1,13 +1,13 @@
 CP2 baseline vs OOP backend - payroll formula parity (EVIDENCE)
 ============================================================================================
 DECISION B (2026-10-27, Paul): the OOP calculators follow the OFFICIAL government matrices,
-not CP2. CP2 was verified against those matrices in oop/Q4-matrix-verification.md and is
+not CP2. CP2 was verified against those matrices in oop/matrix-verification.md and is
 WRONG in 4 places, so a MISMATCH row here is EXPECTED, not a defect:
 
-  1. PhilHealth  - CP2 deducts 100% of the premium; official employee share is 50% (KI-02)
-  2. Pag-IBIG    - CP2 adds the employer share; official employee share is 1%/2%, cap 100 (KI-03)
-  3. Withholding - CP2 bracket 1 uses 20,832; official is 20,833 (KI-04, +PHP 0.20)
-  4. SSS         - CP2 brackets are upper-inclusive; official is lower-inclusive (KI-05, PHP 22.50)
+  1. PhilHealth  - CP2 deducts 100% of the premium; official employee share is 50% (Issue 2)
+  2. Pag-IBIG    - CP2 adds the employer share; official employee share is 1%/2%, cap 100 (Issue 3)
+  3. Withholding - CP2 bracket 1 uses 20,832; official is 20,833 (Issue 4, +PHP 0.20)
+  4. SSS         - CP2 brackets are upper-inclusive; official is lower-inclusive (Issue 5, PHP 22.50)
 
 Proof that the OOP numbers are the CORRECT ones is not this file - it is section H of
 ConsoleBackendTest ("Official matrix conformance"), where every expected value is copied
