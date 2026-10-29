@@ -1006,27 +1006,45 @@ public class Dashboard extends javax.swing.JFrame {
             int workedDays = workingDays[index];
 
             // Calculate total salary
-            double totalSalary = workedDays * hourlyRate * 8; // Assuming working 8 hours a day
+            // Backend (oop package): PayrollCalculator computes gross and every deduction.
+            // Bridge: the month table gives the worked days; record that many 8-hour days in the
+            // selected month (2024 reference calendar) so the backend derives the same gross.
+            motorphemployee.oop.PayrollRecord payslip;
+            try {
+                motorphemployee.oop.Employee payrollEmployee = new motorphemployee.oop.RegularEmployee(
+                        Integer.parseInt(employeeNumber.trim()), lastName, firstName,
+                        birthday, address, phoneNumber,
+                        sssNumber, philhealthNumber, tinNumber, pagibigNumber,
+                        status, position, supervisor,
+                        Double.parseDouble(basicSalaryStr),
+                        Double.parseDouble(riceSubsidyStr),
+                        Double.parseDouble(phoneAllowanceStr),
+                        Double.parseDouble(clothingAllowanceStr),
+                        Double.parseDouble(grossSemiMonthlyRateStr),
+                        hourlyRate, 0);
+                motorphemployee.oop.AttendanceLog attendanceLog = new motorphemployee.oop.AttendanceLog();
+                String monthNo = String.format("%02d", index + 1);
+                for (int day = 1; day <= workedDays; day++) {
+                    String date = "2024-" + monthNo + "-" + String.format("%02d", day);
+                    attendanceLog.recordClockIn(payrollEmployee.getId(), date, "08:00:00");
+                    attendanceLog.recordClockOut(payrollEmployee.getId(), date, "16:00:00");
+                }
+                String periodEnd = "2024-" + monthNo + "-"
+                        + String.format("%02d", java.time.YearMonth.of(2024, index + 1).lengthOfMonth());
+                payslip = new motorphemployee.oop.PayrollCalculator().calculatePayroll(
+                        payrollEmployee, attendanceLog, "2024-" + monthNo + "-01", periodEnd);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, "Cannot compute salary: " + ex.getMessage());
+                return;
+            }
 
-            // Call SSS, PhilHealth, Pagibig methods
-            double sssContribution = calculateSSSContribution(totalSalary);
-            double philhealthContribution = calculatePhilHealthContribution(totalSalary);
-            double pagibigContribution = calculatePagibigContribution(totalSalary);
-
-            // Calculate total deductions without WithHolding Tax
-            double grossDeductions = sssContribution + philhealthContribution + pagibigContribution;
-
-            // Calculate Salary After Tax
-            double salaryAfterTax = totalSalary - grossDeductions;
-
-            // Call Withholding Tax methods
-            double withholdingTax = calculateWithholdingTax(salaryAfterTax);
-
-            // Calculate total deductions
-            double totalDeductions = grossDeductions + withholdingTax;
-
-            // Calculate Net Pay
-            double netPay = salaryAfterTax - withholdingTax;
+            double totalSalary = payslip.getGrossIncome();
+            double sssContribution = payslip.getSSSContribution();
+            double philhealthContribution = payslip.getPhilHealthContribution();
+            double pagibigContribution = payslip.getPagIbigContribution();
+            double withholdingTax = payslip.getWithholdingTax();
+            double totalDeductions = payslip.getTotalDeductions();
+            double netPay = payslip.getNetIncome();
 
             // Display salary and deductions in a dialog
             String message = "Employee Information:\n";
@@ -1192,165 +1210,6 @@ public class Dashboard extends javax.swing.JFrame {
         timer.start();
     }
     
-    public static double calculateSSSContribution(double totalSalary) {
-                double sssContribution = 0;
-                
-                if (totalSalary <= 3250) {
-                    sssContribution = 135;
-                } else if (totalSalary <= 3750) {
-                    sssContribution = 157.50;
-                } else if (totalSalary <= 4250) {
-                    sssContribution = 180;
-                } else if (totalSalary <= 4750) {
-                    sssContribution = 202.50;
-                } else if (totalSalary <= 5250) {
-                    sssContribution = 225;
-                } else if (totalSalary <= 5750) {
-                    sssContribution = 247.50;
-                } else if (totalSalary <= 6250) {
-                    sssContribution = 270;
-                } else if (totalSalary <= 6750) {
-                    sssContribution = 292.50;
-                } else if (totalSalary <= 7250) {
-                    sssContribution = 315;
-                } else if (totalSalary <= 7750) {
-                    sssContribution = 337.50;
-                } else if (totalSalary <= 8250) {
-                    sssContribution = 360;
-                } else if (totalSalary <= 8750) {
-                    sssContribution = 382.50;
-                } else if (totalSalary <= 9250) {
-                    sssContribution = 405;
-                } else if (totalSalary <= 9750) {
-                    sssContribution = 427.50;
-                } else if (totalSalary <= 10250) {
-                    sssContribution = 450;
-                } else if (totalSalary <= 10750) {
-                    sssContribution = 472.50;
-                } else if (totalSalary <= 11250) {
-                    sssContribution = 495;
-                } else if (totalSalary <= 11750) {
-                    sssContribution = 517.50;
-                } else if (totalSalary <= 12250) {
-                    sssContribution = 540;
-                } else if (totalSalary <= 12750) {
-                    sssContribution = 562.50;
-                } else if (totalSalary <= 13250) {
-                    sssContribution = 585;
-                } else if (totalSalary <= 13750) {
-                    sssContribution = 607.50;
-                } else if (totalSalary <= 14250) {
-                    sssContribution = 630;
-                } else if (totalSalary <= 14750) {
-                    sssContribution = 652.50;
-                } else if (totalSalary <= 15250) {
-                    sssContribution = 675;
-                } else if (totalSalary <= 15750) {
-                    sssContribution = 697.50;
-                } else if (totalSalary <= 16250) {
-                    sssContribution = 720;
-                } else if (totalSalary <= 16750) {
-                    sssContribution = 742.50;
-                } else if (totalSalary <= 17250) {
-                    sssContribution = 765;
-                } else if (totalSalary <= 17750) {
-                    sssContribution = 787.50;
-                } else if (totalSalary <= 18250) {
-                    sssContribution = 810;
-                } else if (totalSalary <= 18750) {
-                    sssContribution = 832.50;
-                } else if (totalSalary <= 19250) {
-                    sssContribution = 855;
-                } else if (totalSalary <= 19750) {
-                    sssContribution = 877.50;
-                } else if (totalSalary <= 20250) {
-                    sssContribution = 900;
-                } else if (totalSalary <= 20750) {
-                    sssContribution = 922.50;
-                } else if (totalSalary <= 21250) {
-                    sssContribution = 945;
-                } else if (totalSalary <= 21750) {
-                    sssContribution = 967.50;
-                } else if (totalSalary <= 22250) {
-                    sssContribution = 990;
-                } else if (totalSalary <= 22750) {
-                    sssContribution = 1012.50;
-                } else if (totalSalary <= 23250) {
-                    sssContribution = 1035;
-                } else if (totalSalary <= 23750) {
-                    sssContribution = 1057.50;
-                } else if (totalSalary <= 24250) {
-                    sssContribution = 1080;
-                } else if (totalSalary <= 24750) {
-                    sssContribution = 1102.50;
-                } else {
-                    sssContribution = 1125;
-                }
-            
-                return sssContribution;
-            }
-
-            //Philhealth Method
-            public static double calculatePhilHealthContribution(double totalSalary) {
-                double premiumRate = 0.03; // 3% Premium Rate
-        
-                // Calculate monthly premium based on salary range
-                double monthlyPremium;
-                if (totalSalary <= 10000) {
-                    monthlyPremium = 300;
-                } else if (totalSalary <= 59999.99) {
-                    monthlyPremium = Math.min(300 + (totalSalary - 10000) * premiumRate, 1800);
-                } else {
-                    monthlyPremium = 1800;
-                }
-        
-                // Employee and employer share equally
-                return monthlyPremium;
-            }
-
-            //Pagibig Method
-            public static double calculatePagibigContribution(double totalSalary) {
-                double employeeContributionRate = 0;
-                double employerContributionRate = 0;
-                double totalContributionRate = 0;
-        
-                if (totalSalary >= 1000 && totalSalary <= 1500) {
-                    employeeContributionRate = 0.01;
-                    employerContributionRate = 0.02;
-                    totalContributionRate = employeeContributionRate + employerContributionRate;
-                } else if (totalSalary > 1500) {
-                    employeeContributionRate = 0.02;
-                    employerContributionRate = 0.02;
-                    totalContributionRate = employeeContributionRate + employerContributionRate;
-                }
-        
-                // Calculate the contribution amount
-                double totalContribution = Math.min(totalSalary * totalContributionRate, 100); // Maximum contribution is 100
-        
-                return totalContribution;
-            }
-
-            //Withholding Tax Method
-            public static double calculateWithholdingTax(double salaryAfterTax) {
-                double withholdingTax = 0;
-        
-                if (salaryAfterTax <= 20832) {
-                    withholdingTax = 0;
-                } else if (salaryAfterTax <= 33333) {
-                    withholdingTax = (salaryAfterTax - 20832) * 0.20;
-                } else if (salaryAfterTax <= 66667) {
-                    withholdingTax = 2500 + (salaryAfterTax - 33333) * 0.25;
-                } else if (salaryAfterTax <= 166667) {
-                    withholdingTax = 10833 + (salaryAfterTax - 66667) * 0.30;
-                } else if (salaryAfterTax <= 666667) {
-                    withholdingTax = 40833.33 + (salaryAfterTax - 166667) * 0.32;
-                } else {
-                    withholdingTax = 200833.33 + (salaryAfterTax - 666667) * 0.35;
-                }
-        
-                return withholdingTax;
-            }
-
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton button_change;
     private javax.swing.JButton button_edit_information;
