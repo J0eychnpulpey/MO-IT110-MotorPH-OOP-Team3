@@ -2,7 +2,7 @@
 
 > **Built:** 2026-10-26 (Mon) waves 1–3 · **Wave 4 (`PayrollCalculator`):** 2026-10-28 (Wed) — backend only,
 > **no GUI touched** (GUI rewiring is P5)
-> **Design source:** `MS1 Method Dictionary + CRC Cards` (graded 35/35) — every class and method
+> **Design source:** `MS1 Method Dictionary + CRC Cards` — every class and method
 > name below exists in the approved design. No invented identifiers.
 > **Verified:** `javac` 21.0.12, `-Xlint:all`, **0 warnings, 0 errors** · console harness **91/91 PASS**
 > (sections A–I) · CP2 parity: **25/25 documented deviations** (decision B — the OOP values follow the
@@ -48,7 +48,7 @@ in the backend.
    double hourlyRate, String periodStart, String periodEnd`) instead of the 2-argument Method
    Dictionary row. The formula is exactly the sheet's (`workedDays * hourlyRate * 8`); the extra
    arguments only replace hidden state, because a private helper cannot know the payroll period
-   otherwise. The graded public surface (`calculatePayroll`) matches the sheet one-to-one.
+   otherwise. The public surface (`calculatePayroll`) matches the sheet one-to-one.
 6. **`absences` is 0** in every `PayrollRecord`. There is no absence source in the repo yet (open
    question Q3 — no `attendance.csv`), and inventing absence day counts would put fabricated numbers
    on a payslip. `totalLeaves` comes from the employee's own `getAnnualLeaveCredits()`.
