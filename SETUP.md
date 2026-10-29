@@ -142,7 +142,7 @@ java -cp build/classes motorphemployee.LoadingScreen
 Expected console-test output ends with:
 
 ```
-=== SUMMARY: 50 passed, 0 failed ===
+=== SUMMARY: 91 passed, 0 failed ===
 RESULT: PASS
 ```
 
@@ -155,7 +155,7 @@ RESULT: PASS
 | Employee login (`Login`) | Employee # · Username · Password | `1`–`34` · `admin` · `password` |
 | HR login (`LoginHR`) | Username · Password | `admin` · `password` |
 
-All 34 employee records share the same demo credentials, and passwords are stored in plaintext in `data.csv` / `HRLogin.csv`. That is **CP2 baseline behaviour** and one of the findings the refactor addresses with the `Credentials` class.
+All 34 employee records share the same demo credentials, and passwords are stored in plaintext in `data.csv` / `HRLogin.csv`. That is **CP2 baseline behaviour**. The MS1 design defines a `Credentials` class for this; the migration is not part of the current refactor and is recorded as an open item in the MS2 Known Issues list.
 
 ---
 
@@ -165,9 +165,10 @@ Keep these in sync with the worksheet — they are the proof quoted in the MS2 t
 
 | File | Content |
 |---|---|
-| `oop/console-test-output.txt` | Backend assertions (50/50 PASS) |
+| `oop/console-test-output.txt` | Backend assertions (91/91 PASS, sections A–I) |
 | `oop/parity-report.txt` | OOP vs CP2 computation comparison |
 | `oop/cp2-parity-output.txt` | Raw CP2 reference output |
+| `oop/Q4-matrix-verification.md` | The four statutory formulas checked against the official matrices (per-input tables) |
 | `oop/NOTES.md` | Scope, adjustments, known issues (KI-01 …) |
 
 ---
