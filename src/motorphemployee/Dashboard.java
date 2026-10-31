@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  *
@@ -975,40 +976,56 @@ public class Dashboard extends javax.swing.JFrame {
         // Convert string to double
         double hourlyRate = Double.parseDouble(hourlyRateStr);
 
-        // Array of months
-        String[] months = {
-            "January", "February", "March", "April",
-            "May", "June", "July", "August",
-            "September", "October", "November", "December"
-        };
+        // Payroll periods come from the real timecard: only the months that have
+        // clock-in/clock-out rows for this employee are offered, so a period can never be
+        // priced from an invented working-day table.
+        AttendanceRepository attendanceRepository = AttendanceRepository.forProjectFiles();
+        List<java.time.YearMonth> payrollPeriods;
+        try {
+            payrollPeriods = attendanceRepository.monthsWithRecords(Integer.parseInt(employeeNumber.trim()));
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Cannot read attendance.csv: " + ex.getMessage());
+            return;
+        }
+        if (payrollPeriods.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No attendance records for employee " + employeeNumber.trim()
+                    + " in attendance.csv, so no payslip can be computed.");
+            return;
+        }
+        String[] periodLabels = new String[payrollPeriods.size()];
+        for (int i = 0; i < payrollPeriods.size(); i++) {
+            periodLabels[i] = AttendanceRepository.labelOf(payrollPeriods.get(i));
+        }
 
-        // Array of number of working days corresponding to each month
-        int[] workingDays = {
-            23, 21, 21, 22,
-            23, 20, 23, 22,
-            21, 23, 21, 22
-        };
-
-        // Let the user choose the month
+        // Let the user choose the payroll period
         String selectedMonth = (String) JOptionPane.showInputDialog(
                 this,
-                "Choose a month:",
-                "Month Selection",
+                "Choose a payroll period:",
+                "Period Selection",
                 JOptionPane.PLAIN_MESSAGE,
                 null,
-                months,
-                null
+                periodLabels,
+                periodLabels[0]
         );
 
-        if (selectedMonth != null) { // If user selects a month
-            // Retrieve the number of working days for the selected month
-            int index = Arrays.asList(months).indexOf(selectedMonth);
-            int workedDays = workingDays[index];
+        if (selectedMonth != null) { // If user selects a period
+            java.time.YearMonth payrollPeriod = payrollPeriods.get(Arrays.asList(periodLabels).indexOf(selectedMonth));
+            String periodStart = AttendanceRepository.periodStartOf(payrollPeriod);
+            String periodEnd = AttendanceRepository.periodEndOf(payrollPeriod);
+            motorphemployee.oop.AttendanceLog attendanceLog;
+            int workedDays;
+            try {
+                attendanceLog = attendanceRepository.loadFor(Integer.parseInt(employeeNumber.trim()), payrollPeriod);
+                workedDays = attendanceLog.getWorkedDays(Integer.parseInt(employeeNumber.trim()),
+                        periodStart, periodEnd);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Cannot read attendance.csv: " + ex.getMessage());
+                return;
+            }
 
             // Calculate total salary
             // Backend (oop package): PayrollCalculator computes gross and every deduction.
-            // Bridge: the month table gives the worked days; record that many 8-hour days in the
-            // selected month (2024 reference calendar) so the backend derives the same gross.
+            // The worked days are the real timecard rows for the chosen period.
             motorphemployee.oop.PayrollRecord payslip;
             try {
                 // Instantiate the subclass that matches the employee's status, so the
@@ -1044,17 +1061,10 @@ public class Dashboard extends javax.swing.JFrame {
                             Double.parseDouble(grossSemiMonthlyRateStr),
                             hourlyRate, 0);
                 }
-                motorphemployee.oop.AttendanceLog attendanceLog = new motorphemployee.oop.AttendanceLog();
-                String monthNo = String.format("%02d", index + 1);
-                for (int day = 1; day <= workedDays; day++) {
-                    String date = "2024-" + monthNo + "-" + String.format("%02d", day);
-                    attendanceLog.recordClockIn(payrollEmployee.getId(), date, "08:00:00");
-                    attendanceLog.recordClockOut(payrollEmployee.getId(), date, "16:00:00");
-                }
-                String periodEnd = "2024-" + monthNo + "-"
-                        + String.format("%02d", java.time.YearMonth.of(2024, index + 1).lengthOfMonth());
+                // Attendance is the real timecard for the chosen period (attendance.csv);
+                // workedDays was read from the same log, so the payslip cannot drift from it.
                 payslip = new motorphemployee.oop.PayrollCalculator().calculatePayroll(
-                        payrollEmployee, attendanceLog, "2024-" + monthNo + "-01", periodEnd);
+                        payrollEmployee, attendanceLog, periodStart, periodEnd);
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(this, "Cannot compute salary: " + ex.getMessage());
                 return;

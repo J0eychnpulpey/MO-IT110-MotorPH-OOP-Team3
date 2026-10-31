@@ -145,6 +145,24 @@ reported in the MS2 Known Issues List (rows 18 and 19).
 | No regression | `ConsoleBackendTest` still reports **91 passed, 0 failed**; `data.csv` is rewritten with its 24 columns and its original CRLF line endings |
 | Not yet verified | GUI click-through of Pending Leaves → Leave Management (the window logic was compiled and reviewed, but the screens were not clicked in this run) |
 
+## Real timecard instead of invented attendance (2026-10-31)
+
+Known issue 16 in the MS2 Known Issues List: the payroll screens recorded a fixed 08:00–16:00 day
+on a 2024 calendar for every "worked day" of a hardcoded month table, so a payslip was never tied to
+an actual timecard.
+
+| What | Evidence |
+|---|---|
+| Source | the group's `Copy of MotorPH_Employee Data.xlsx`, tab **Attendance Record** (`Employee #, Last Name, First Name, Date, Log In, Log Out`) |
+| Import | `src/motorphemployee/attendance.csv` — **5,168 rows, 34 employees, 2025-06-03 → 2025-12-31**, one row per employee per working day, 0 duplicate employee/day pairs, 0 missing clock-in or clock-out |
+| Employee numbers | the sheet uses 10001–10034 while `data.csv` uses 1–34 for the same 34 people (names identical, offset 10000), so the export is keyed to the ids `data.csv` already uses |
+| Reader | `AttendanceRepository` turns rows into an `AttendanceLog`; the period picker offers only months that have rows, and worked days come from `AttendanceLog.getWorkedDays` — the same value `PayrollCalculator` prices |
+| Screens | the duplicated 08:00–16:00 loop and the `workingDays[]` table are gone from `Dashboard` and `MainMenu`; both read the repository instead |
+| Evidence | `oop/attendance-test-output.txt` — 33 assertions, 0 failures |
+| No regression | `ConsoleBackendTest` 91/91, leave evidence 44/44 |
+| Numbers | for this dataset the timecard has the same working days as the old table (Jun 20, Jul 23, Aug 22, Sep 21, Oct 23, Nov 21, Dec 22), so payslip amounts for those months do not move — but they are now derived from the timecard, and a month with no rows is not offered at all |
+| Not verified | GUI click-through of View Salary / Calculate Salary (compiled and console-tested, not clicked in this run) |
+
 ## How to build and run (verified commands)
 
 ```bash
@@ -164,6 +182,14 @@ javac -encoding UTF-8 -d <outdir> $(find src oop/src -name '*.java') test/LeaveS
 java -cp <outdir> LeaveServiceTest
 ```
 
+```bash
+# compile the GUI + backend + the attendance evidence test
+javac -encoding UTF-8 -d <outdir> $(find src oop/src -name '*.java') test/AttendanceRepositoryTest.java
+
+# run the attendance evidence (exit code 0 = all pass)
+java -cp <outdir> AttendanceRepositoryTest
+```
+
 Evidence files in this folder: `console-test-output.txt` (the actual run),
 `parity-report.txt` (CP2 vs OOP, per input), `cp2-parity-output.txt` (frozen CP2 formulas),
-`leave-fix-test-output.txt` (the leave workflow run).
+`leave-fix-test-output.txt` (the leave workflow run), `attendance-test-output.txt` (the timecard run).
