@@ -74,3 +74,28 @@ GUI click-through. Still to do by hand: open each popup, confirm it takes focus,
 opening button repeatedly (should stay one window, the parent blocked), and close one via the
 taskbar to confirm the app survives. Until that run happens, MS2 Known Issues r22 stays
 Unresolved.
+
+MOUSE-FREE CLOSE TEST ON THE RUNNING APP (the third symptom, after the fix)
+Date: 2026-10-31 22:47 Asia/Taipei
+App: launched from Eclipse (javaw.exe pid 7272), Dashboard open as employee 1
+Why: the Cancel button calls dispose() directly and therefore proves nothing - the defect
+     lived in the window-manager close path (WM_CLOSE -> WINDOW_CLOSING -> default close
+     operation). Alt+F4 does nothing on an undecorated dialog, so the close request was sent
+     straight to the popup's HWND, which is exactly what the taskbar's "Close window" sends.
+
+    WATCHING pid=7272 for class=SunAwtDialog (up to 240s)
+    POPUP FOUND hwnd=1246678
+    POSTED WM_CLOSE ok=True
+    APP_ALIVE=YES
+    POPUP_GONE=True
+
+Reading: the popup accepted the close request and disappeared (POPUP_GONE), and the JVM that
+hosts the main window kept running (APP_ALIVE=YES). Before the fix the same message reached
+EXIT_ON_CLOSE and took the whole application down.
+
+HUMAN CONFIRMATION OF THE FIRST TWO SYMPTOMS
+The tester who filed the issue (Ethan, Eclipse, 2026-10-31) after pulling main @ a29fd2b:
+    "The window focus is now stolen by the popups, so hindi na possible yung duplicates."
+
+So all three reported symptoms are now covered: focus (tester), duplicates (tester), and
+closing a popup no longer ending the app (WM_CLOSE test above).

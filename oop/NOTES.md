@@ -178,7 +178,7 @@ many times from the same button, and closing one from the taskbar closed the who
 | Evidence | `oop/ki22-modal-popups-output.txt` — before: `close = 3`, one `WINDOW_CLOSING` dispatch kills the JVM; after: five screens `JDialog / modal=true / close = 2`, all five closed, `STILL ALIVE`, exit 0 |
 | Left alone | `EXIT_ON_CLOSE` stays only on the top-level windows: `LoadingScreen`, `LandingPage`, `Login`, `LoginHR`, `Dashboard`, `MainMenu` |
 | No regression | `ConsoleBackendTest` 91/91, `LeaveServiceTest` 44/44, `AttendanceRepositoryTest` 33/33, `javac -Xlint:all` 0 errors |
-| Not yet verified | GUI click-through: focus on open, repeated clicks on the opening button, and closing a popup from the taskbar |
+| GUI verification | focus and duplicates confirmed by the tester who filed the issue (Ethan, Eclipse, after pulling main @ a29fd2b): "The window focus is now stolen by the popups, so hindi na possible yung duplicates." The third symptom needed the real close path, because Cancel only calls `dispose()`: a `WM_CLOSE` posted to the popup's HWND (the same message the taskbar's "Close window" sends) closed the form and left the app running (`APP_ALIVE=YES`, `POPUP_GONE=True`). Details in `oop/ki22-modal-popups-output.txt` |
 
 ## How to build and run (verified commands)
 
