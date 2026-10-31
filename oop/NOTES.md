@@ -130,6 +130,21 @@ object the screens built: `new RegularEmployee(...)` for every employee, probati
 | GUI re-run | employee 21 (Probationary) completed **View Salary** with no error dialog, 30 Oct 2026 |
 | No regression | gross parity **408/408** comparisons, 0 mismatches, worst delta **0.0** |
 
+## Leave workflow fix (2026-10-31)
+
+Two defects in the leave screens, both found by the group's tester after the Week 9 smoke test and
+reported in the MS2 Known Issues List (rows 18 and 19).
+
+| What | Evidence |
+|---|---|
+| Approving a request wrote `leaves.csv` and moved the leave credits immediately, but the request stayed in `pendingleaves.csv` until Save was pressed, so the same leave could be approved again and counted twice | before: `LeaveApproval.approvedActionPerformed` only did `model.removeRow(...)`; `saveActionPerformed` was the only writer of `pendingleaves.csv` |
+| Once the approve call site was fixed (commit `683c9f0`), rejected leaves were still written with the reason and the approval swapped, because the reject call passed `(reason, approval)` into `writeToFile(..., approval, reason)` | `git show 683c9f0` touches one call site: a rejected row still lands as `Reason=No`, `Approved?=<reason>` |
+| Fix | `LeaveService` is now the only writer of the three files. One `decide(index, approved)` call removes the request, appends the processed row in header order and moves the credits, and restores all three files if a write fails. `LeaveApproval` keeps the table view only, the manual Save button is gone, and `LeaveManagement` reads `leaves.csv` through the same service |
+| Column order | `LeaveService.LEAVE_COLUMNS` is the single definition of `Employee ID, Leave Type, Days, Reason, Approved?`; approve and reject both go through it, so the two call sites cannot disagree again |
+| Evidence | `oop/leave-fix-test-output.txt` — 44 assertions, 0 failures: approve, reject, double-processing refused, stale row refused, shifted (ragged) `data.csv` refused instead of being rewritten, unknown employee, zero-credit employee, comma inside a reason, CRLF preserved, rollback after a failed write |
+| No regression | `ConsoleBackendTest` still reports **91 passed, 0 failed**; `data.csv` is rewritten with its 24 columns and its original CRLF line endings |
+| Not yet verified | GUI click-through of Pending Leaves → Leave Management (the window logic was compiled and reviewed, but the screens were not clicked in this run) |
+
 ## How to build and run (verified commands)
 
 ```bash
@@ -141,5 +156,14 @@ javac -encoding UTF-8 -Xlint:all -d <outdir> \
 java -cp <outdir> motorphemployee.oop.ConsoleBackendTest
 ```
 
+```bash
+# compile the GUI + backend + the leave evidence test
+javac -encoding UTF-8 -d <outdir> $(find src oop/src -name '*.java') test/LeaveServiceTest.java
+
+# run the leave evidence (exit code 0 = all pass)
+java -cp <outdir> LeaveServiceTest
+```
+
 Evidence files in this folder: `console-test-output.txt` (the actual run),
-`parity-report.txt` (CP2 vs OOP, per input), `cp2-parity-output.txt` (frozen CP2 formulas).
+`parity-report.txt` (CP2 vs OOP, per input), `cp2-parity-output.txt` (frozen CP2 formulas),
+`leave-fix-test-output.txt` (the leave workflow run).

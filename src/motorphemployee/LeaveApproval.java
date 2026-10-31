@@ -4,23 +4,19 @@
  */
 package motorphemployee;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import motorphemployee.LeaveManagement;
 
 /**
  *
  * @author set
  */
 public class LeaveApproval extends javax.swing.JFrame {
+
+    /** Single writer for pendingleaves.csv, leaves.csv and the leave-credit columns of data.csv. */
+    private final LeaveService leaveService = LeaveService.forProjectFiles();
 
     /**
      * Creates new form LeaveApproval
@@ -29,20 +25,18 @@ public class LeaveApproval extends javax.swing.JFrame {
         initComponents();
         displayPendingLeaves();
     }
-    
+
     private void displayPendingLeaves() {
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.setRowCount(0); // Clear existing rows
-        
-        String csvFile = "src/motorphemployee/pendingleaves.csv";
-        String line;
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(",");
-                model.addRow(data);
+        try {
+            List<String[]> pending = leaveService.loadPending();
+            for (String[] row : pending) {
+                model.addRow(LeaveService.pendingTableRow(row));
             }
         } catch (IOException e) {
-            System.err.println("Error reading CSV file: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error reading the pending leave file: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -61,7 +55,6 @@ public class LeaveApproval extends javax.swing.JFrame {
         rejected = new javax.swing.JButton();
         Exit = new javax.swing.JButton();
         back = new javax.swing.JButton();
-        save = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         logo = new javax.swing.JLabel();
 
@@ -111,14 +104,6 @@ public class LeaveApproval extends javax.swing.JFrame {
             }
         });
 
-        save.setIcon(new javax.swing.ImageIcon(getClass().getResource("/image/save.png"))); // NOI18N
-        save.setText("Save");
-        save.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                saveActionPerformed(evt);
-            }
-        });
-
         jLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
         jLabel1.setText("Leave Approval Center");
 
@@ -141,9 +126,7 @@ public class LeaveApproval extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(back, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(Exit)
-                                .addGap(18, 18, 18)
-                                .addComponent(save))
+                                .addComponent(Exit))
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 855, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(rejected)
@@ -164,7 +147,6 @@ public class LeaveApproval extends javax.swing.JFrame {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(save)
                             .addComponent(Exit)
                             .addComponent(back))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -197,149 +179,51 @@ public class LeaveApproval extends javax.swing.JFrame {
     }//GEN-LAST:event_ExitActionPerformed
 
     private void approvedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_approvedActionPerformed
-        // Get the selected row index
-        int selectedRowIndex = jTable1.getSelectedRow();
-        if (selectedRowIndex == -1) {
-        JOptionPane.showMessageDialog(this, "Please select a leave request to approve.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-    
-    // Get the data from the selected row
-    String employeeId = (String) jTable1.getValueAt(selectedRowIndex, 0);
-    String leaveType = (String) jTable1.getValueAt(selectedRowIndex, 1);
-    int days = Integer.parseInt((String) jTable1.getValueAt(selectedRowIndex, 2));
-    String reason = (String) jTable1.getValueAt(selectedRowIndex, 3);
-    
-    // Set the approval status to "Yes"
-    String approval = "Yes";
-    
-    // Update leave credits and approved leaves
-    if (updateLeaveCredits(employeeId, days, true)) {
-        // Append the data to the CSV file
-        writeToFile(employeeId, leaveType, days, approval, reason);
-        
-        // Remove the approved row from the table model
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.removeRow(selectedRowIndex);
-    }
-}    
-    
-    private void writeToFile(String employeeId, String leaveType, int days, String approval, String reason) {
-        // Define the path to the CSV file
-        String csvFile = "src/motorphemployee/leaves.csv";
-    try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile, true))) {
-        // Write the data to the CSV file
-        writer.write(employeeId + "," + leaveType + "," + days + "," + reason + "," + approval + "\n");
-        JOptionPane.showMessageDialog(this, "Leave request processed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-    } catch (IOException e) {
-        JOptionPane.showMessageDialog(this, "An error occurred while processing the leave request: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }  
+        processSelectedLeave(true);
     }//GEN-LAST:event_approvedActionPerformed
 
+    /**
+     * Applies one decision to the selected request. The service updates the
+     * pending file, the processed file and the leave credits together, so the
+     * request disappears from Pending Leaves at the same moment it appears in
+     * Leave Management and it cannot be approved or rejected a second time.
+     */
+    private void processSelectedLeave(boolean approved) {
+        int selectedRowIndex = jTable1.getSelectedRow();
+        if (selectedRowIndex == -1) {
+            JOptionPane.showMessageDialog(this,
+                    approved ? "Please select a leave request to approve." : "Please select a leave request to reject.",
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        try {
+            String[] shown = new String[] {
+                String.valueOf(jTable1.getValueAt(selectedRowIndex, LeaveService.COLUMN_EMPLOYEE_ID)),
+                String.valueOf(jTable1.getValueAt(selectedRowIndex, LeaveService.COLUMN_LEAVE_TYPE)),
+                String.valueOf(jTable1.getValueAt(selectedRowIndex, LeaveService.COLUMN_DAYS)),
+                String.valueOf(jTable1.getValueAt(selectedRowIndex, LeaveService.COLUMN_REASON))
+            };
+            String[] processed = leaveService.decide(selectedRowIndex, shown, approved);
+            displayPendingLeaves();
+            jTable1.clearSelection();
+            JOptionPane.showMessageDialog(this,
+                    (approved ? "Leave approved" : "Leave rejected") + " for employee "
+                    + processed[LeaveService.COLUMN_EMPLOYEE_ID] + " ("
+                    + processed[LeaveService.COLUMN_DAYS] + " day(s), reason \""
+                    + processed[LeaveService.COLUMN_REASON] + "\"). The request is no longer pending.",
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IllegalArgumentException | IllegalStateException ruleFailure) {
+            JOptionPane.showMessageDialog(this, ruleFailure.getMessage(),
+                    "Cannot process leave", JOptionPane.ERROR_MESSAGE);
+        } catch (IOException ioFailure) {
+            JOptionPane.showMessageDialog(this, "An error occurred while processing the leave request: "
+                    + ioFailure.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void rejectedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rejectedActionPerformed
-        // TODO add your handling code here:
-    // Get the selected row index
-    int selectedRowIndex = jTable1.getSelectedRow();
-    if (selectedRowIndex == -1) {
-        JOptionPane.showMessageDialog(this, "Please select a leave request to reject.", "Error", JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-    
-    // Get the data from the selected row
-    String employeeId = (String) jTable1.getValueAt(selectedRowIndex, 0);
-    String leaveType = (String) jTable1.getValueAt(selectedRowIndex, 1);
-    int days = Integer.parseInt((String) jTable1.getValueAt(selectedRowIndex, 2));
-    String reason = (String) jTable1.getValueAt(selectedRowIndex, 3);
-    
-    // Set the approval status to "No"
-    String approval = "No";
-    
-    // Update rejected leaves
-    if (updateLeaveCredits(employeeId, days, false)) {
-        // Append the data to the CSV file
-        writeToFile(employeeId, leaveType, days, reason, approval);
-        
-        // Remove the rejected row from the table model
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        model.removeRow(selectedRowIndex);
-    }                             
+        processSelectedLeave(false);
     }//GEN-LAST:event_rejectedActionPerformed
-
-     //User must save it first to reflect on the CSV File for validation
-    private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
-        // Get the table model
-        DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-
-    try (BufferedWriter bw = new BufferedWriter(new FileWriter("src/motorphemployee/pendingleaves.csv"))) {
-        // Write data rows to the CSV file
-        for (int i = 0; i < model.getRowCount(); i++) {
-            for (int j = 0; j < model.getColumnCount(); j++) {
-                bw.write(model.getValueAt(i, j).toString());
-                if (j < model.getColumnCount() - 1) {
-                    bw.write(",");
-                }
-            }
-            bw.newLine();
-        }
-        JOptionPane.showMessageDialog(this, "Saved successfully!");
-    } catch (IOException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Error saving data to CSV file: " + e.getMessage());
-    }
-    }
-    
-    private boolean updateLeaveCredits(String employeeId, int days, boolean isApproved) {
-    // Define the path to the data file
-    String filePath = "src/motorphemployee/data.csv";
-    List<String[]> records = new ArrayList<>();
-    boolean found = false;
-
-    try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-        String line;
-        while ((line = br.readLine()) != null) {
-            String[] data = line.split(",");
-            if (data[0].equals(employeeId)) {
-                int leaveCredits = Integer.parseInt(data[21]);
-                int approvedLeaves = Integer.parseInt(data[22]);
-                int rejectedLeaves = Integer.parseInt(data[23]);
-
-                if (isApproved) {
-                    if (leaveCredits > 0) {
-                        data[21] = String.valueOf(leaveCredits - 1); // Deduct 1 leave credit
-                        data[22] = String.valueOf(approvedLeaves + 1); // Increment apporved leaves
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Not enough leave credits.", "Error", JOptionPane.ERROR_MESSAGE);
-                        return false;
-                    }
-                } else {
-                    data[23] = String.valueOf(rejectedLeaves + 1); // Increment rejected leaves
-                }
-                found = true;
-            }
-            records.add(data);
-        }
-    } catch (IOException e) {
-        JOptionPane.showMessageDialog(this, "Error reading data file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        return false;
-    }
-    
-    if (!found) {
-        JOptionPane.showMessageDialog(this, "Employee ID not found.", "Error", JOptionPane.ERROR_MESSAGE);
-        return false;
-    }
-    
-    try (PrintWriter pw = new PrintWriter(new FileWriter(filePath))) {
-        // Write the updated data back to the file
-        for (String[] record : records) {
-            pw.println(String.join(",", record));
-        }
-    } catch (IOException e) {
-        JOptionPane.showMessageDialog(this, "Error writing data file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        return false;
-    }
-    
-    return true;
-    }//GEN-LAST:event_saveActionPerformed
 
     /**
      * @param args the command line arguments
@@ -385,6 +269,5 @@ public class LeaveApproval extends javax.swing.JFrame {
     private javax.swing.JTable jTable1;
     private javax.swing.JLabel logo;
     private javax.swing.JButton rejected;
-    private javax.swing.JButton save;
     // End of variables declaration//GEN-END:variables
 }

@@ -4,8 +4,6 @@
  */
 package motorphemployee;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -15,6 +13,9 @@ import javax.swing.table.DefaultTableModel;
  * @author set
  */
 public class LeaveManagement extends javax.swing.JFrame {
+
+    /** Single reader for leaves.csv, so the screen and the approval flow agree. */
+    private final LeaveService leaveService = LeaveService.forProjectFiles();
 
     /**
      * Creates new form LeaveManagement
@@ -136,19 +137,16 @@ public class LeaveManagement extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_cancelActionPerformed
     
-   private void displayLeaves() { // This method displays leaves stored in a CSV file into a JTable
+   private void displayLeaves() { // This method displays the processed leaves in a JTable
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.setRowCount(0); // Clear existing rows
-        
-        String csvFile = "src/motorphemployee/leaves.csv";
-        String line;
-        try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split(",");
-                model.addRow(data);
+        try {
+            for (String[] row : leaveService.loadProcessed()) {
+                model.addRow(LeaveService.processedTableRow(row));
             }
         } catch (IOException e) {
-            System.err.println("Error reading CSV file: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error reading the leave file: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
    }
 
