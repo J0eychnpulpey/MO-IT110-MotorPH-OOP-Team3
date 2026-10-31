@@ -216,7 +216,7 @@ public class LeaveApproval extends javax.swing.JFrame {
     // Update leave credits and approved leaves
     if (updateLeaveCredits(employeeId, days, true)) {
         // Append the data to the CSV file
-        writeToFile(employeeId, leaveType, days, reason, approval);
+        writeToFile(employeeId, leaveType, days, approval, reason);
         
         // Remove the approved row from the table model
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
