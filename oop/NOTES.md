@@ -143,7 +143,7 @@ reported in the MS2 Known Issues List (rows 18 and 19).
 | Column order | `LeaveService.LEAVE_COLUMNS` is the single definition of `Employee ID, Leave Type, Days, Reason, Approved?`; approve and reject both go through it, so the two call sites cannot disagree again |
 | Evidence | `oop/leave-fix-test-output.txt` — 44 assertions, 0 failures: approve, reject, double-processing refused, stale row refused, shifted (ragged) `data.csv` refused instead of being rewritten, unknown employee, zero-credit employee, comma inside a reason, CRLF preserved, rollback after a failed write |
 | No regression | `ConsoleBackendTest` still reports **91 passed, 0 failed**; `data.csv` is rewritten with its 24 columns and its original CRLF line endings |
-| Not yet verified | GUI click-through of Pending Leaves → Leave Management (the window logic was compiled and reviewed, but the screens were not clicked in this run) |
+| GUI click-through | **verified 2026-10-31 21:15** (HR login, VS Code F5 → LandingPage): Leave Management → Pending Leaves processed one approve and one reject; both requests left `pendingleaves.csv` on that same click with no Save, the reject row landed as `Reason=Sick, Approved?=No`, and the credits moved `12,0,0 → 11,1,0` (approved) / `11,1,0 → 11,1,1` (rejected). Raw run: `oop/gui-retest-output.txt` |
 
 ## Real timecard instead of invented attendance (2026-10-31)
 
@@ -161,7 +161,7 @@ an actual timecard.
 | Evidence | `oop/attendance-test-output.txt` — 33 assertions, 0 failures |
 | No regression | `ConsoleBackendTest` 91/91, leave evidence 44/44 |
 | Numbers | for this dataset the timecard has the same working days as the old table (Jun 20, Jul 23, Aug 22, Sep 21, Oct 23, Nov 21, Dec 22), so payslip amounts for those months do not move — but they are now derived from the timecard, and a month with no rows is not offered at all |
-| Not verified | GUI click-through of View Salary / Calculate Salary (compiled and console-tested, not clicked in this run) |
+| Not yet verified (2026-10-31) | GUI click-through of View Salary / Calculate Salary (compiled and console-tested, not clicked in this run — the 21:15 GUI retest covered the leave screens only, not these two) |
 
 ## How to build and run (verified commands)
 
