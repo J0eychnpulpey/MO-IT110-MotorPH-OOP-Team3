@@ -12,7 +12,7 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author set
  */
-public class LeaveManagement extends javax.swing.JFrame {
+public class LeaveManagement extends javax.swing.JDialog {
 
     /** Single reader for leaves.csv, so the screen and the approval flow agree. */
     private final LeaveService leaveService = LeaveService.forProjectFiles();
@@ -20,7 +20,8 @@ public class LeaveManagement extends javax.swing.JFrame {
     /**
      * Creates new form LeaveManagement
      */
-    public LeaveManagement() {
+    public LeaveManagement(java.awt.Frame owner) {
+        super(owner, true); // modal: the screen behind it waits until this one closes
         initComponents();
         displayLeaves();
     }
@@ -42,7 +43,7 @@ public class LeaveManagement extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         logo = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setUndecorated(true);
         setResizable(false);
 
@@ -124,12 +125,11 @@ public class LeaveManagement extends javax.swing.JFrame {
 
     private void pendingLeavesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pendingLeavesActionPerformed
         // TODO add your handling code here:
-    LeaveApproval leaveApproval = new LeaveApproval();
-    
-    // Make the LeaveApproval window visible
-    leaveApproval.setVisible(true);
-    
+    // Both screens are modal, so this one has to go first: a modal child blocks
+    // inside setVisible(), which would leave this screen open behind it.
+    java.awt.Frame owner = ownerFrameOf(this);
     this.dispose();
+    new LeaveApproval(owner).setVisible(true);
     }//GEN-LAST:event_pendingLeavesActionPerformed
 
     private void cancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelActionPerformed
@@ -137,6 +137,12 @@ public class LeaveManagement extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_cancelActionPerformed
     
+    /** The window that opened this dialog, so the swap keeps the right modal owner. */
+    private static java.awt.Frame ownerFrameOf(java.awt.Component component) {
+        java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(component);
+        return (window instanceof java.awt.Frame) ? (java.awt.Frame) window : null;
+    }
+
    private void displayLeaves() { // This method displays the processed leaves in a JTable
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
         model.setRowCount(0); // Clear existing rows
@@ -180,7 +186,7 @@ public class LeaveManagement extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new LeaveManagement().setVisible(true);
+                new LeaveManagement(null).setVisible(true);
             }
         });
     }

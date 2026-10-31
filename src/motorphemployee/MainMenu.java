@@ -1290,7 +1290,7 @@ if (jTable1.getSelectedRowCount() == 1) {
 
     private void leave_managementActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_leave_managementActionPerformed
     // TODO add your handling code here:
-    LeaveManagement leaveManagement = new LeaveManagement();
+    LeaveManagement leaveManagement = new LeaveManagement(this);
     
     // Make the LeaveManagement window visible
     leaveManagement.setVisible(true);
@@ -1312,7 +1312,7 @@ if (jTable1.getSelectedRowCount() == 1) {
 
     private void addActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addActionPerformed
         // TODO add your handling code here:
-        Form form = new Form();
+        Form form = new Form(this);
         form.setVisible(true);
 
     }//GEN-LAST:event_addActionPerformed

@@ -163,6 +163,23 @@ an actual timecard.
 | Numbers | for this dataset the timecard has the same working days as the old table (Jun 20, Jul 23, Aug 22, Sep 21, Oct 23, Nov 21, Dec 22), so payslip amounts for those months do not move — but they are now derived from the timecard, and a month with no rows is not offered at all |
 | Not yet verified (2026-10-31) | GUI click-through of View Salary / Calculate Salary (compiled and console-tested, not clicked in this run — the 21:15 GUI retest covered the leave screens only, not these two) |
 
+## Popup windows are modal dialogs (KI-22, 2026-10-31)
+
+Known issue 22 in the MS2 Known Issues List: the popup screens did not take focus, could be opened
+many times from the same button, and closing one from the taskbar closed the whole application.
+
+| What | Evidence |
+|---|---|
+| Cause | every popup was a `JFrame` built with `setDefaultCloseOperation(EXIT_ON_CLOSE)`, so a close request on a child called `System.exit()` on the JVM that also hosts the main window; none was modal, and each parent did `new <Screen>(...)` on every click |
+| Why it looked IDE-specific | it is not. The probe never makes a window visible and the JVM still exits, because `JFrame.processWindowEvent` performs the exit — so Eclipse, VS Code and a plain terminal behave the same. In a VS Code debug session the dead JVM only reads as "debug session ended" |
+| Fix | `LeaveForm`, `ChangeCredentials`, `Form`, `LeaveManagement` and `LeaveApproval` now extend `JDialog`, are constructed modal with the opening window as owner, and use `DISPOSE_ON_CLOSE`. Duplicates need no singleton field: a modal child blocks the parent, so the button that opens it cannot be clicked twice |
+| Navigation | Leave Management and Pending Leaves replace each other, so each hands the owner up one level and disposes itself before opening the modal child — a modal child blocks inside `setVisible()`, which would otherwise leave the old screen open behind it |
+| Form metadata | the five `.form` files were switched to `JDialogFormInfo` with `defaultCloseOperation` 2, so the NetBeans designer matches the classes |
+| Evidence | `oop/ki22-modal-popups-output.txt` — before: `close = 3`, one `WINDOW_CLOSING` dispatch kills the JVM; after: five screens `JDialog / modal=true / close = 2`, all five closed, `STILL ALIVE`, exit 0 |
+| Left alone | `EXIT_ON_CLOSE` stays only on the top-level windows: `LoadingScreen`, `LandingPage`, `Login`, `LoginHR`, `Dashboard`, `MainMenu` |
+| No regression | `ConsoleBackendTest` 91/91, `LeaveServiceTest` 44/44, `AttendanceRepositoryTest` 33/33, `javac -Xlint:all` 0 errors |
+| Not yet verified | GUI click-through: focus on open, repeated clicks on the opening button, and closing a popup from the taskbar |
+
 ## How to build and run (verified commands)
 
 ```bash

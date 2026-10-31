@@ -12,14 +12,15 @@ import javax.swing.JOptionPane;
  *
  * @author set
  */
-public class LeaveForm extends javax.swing.JFrame {
+public class LeaveForm extends javax.swing.JDialog {
 
     /**
      * Creates new form LeaveForm
      */
     private String employeeNumber;
     
-    public LeaveForm(String employeeNumber) {
+    public LeaveForm(java.awt.Frame owner, String employeeNumber) {
+        super(owner, true); // modal: the Dashboard waits until this form is closed
         this.employeeNumber = employeeNumber;
         initComponents();
     }
@@ -44,7 +45,7 @@ public class LeaveForm extends javax.swing.JFrame {
         reason = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setUndecorated(true);
         setResizable(false);
 

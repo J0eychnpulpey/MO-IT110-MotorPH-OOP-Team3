@@ -17,13 +17,13 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author set
  */
-public class Form extends javax.swing.JFrame {
+public class Form extends javax.swing.JDialog {
 
     /**
      * Creates new form Form
      */
-    public Form() {
-        
+    public Form(java.awt.Frame owner) {
+        super(owner, true); // modal: the main menu waits until this form is closed
         initComponents();
     }
 
@@ -88,7 +88,7 @@ public class Form extends javax.swing.JFrame {
         Cancel = new javax.swing.JButton();
         jLabel26 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setUndecorated(true);
         setResizable(false);
 
@@ -646,7 +646,7 @@ public class Form extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Form().setVisible(true);
+                new Form(null).setVisible(true);
             }
         });
     }

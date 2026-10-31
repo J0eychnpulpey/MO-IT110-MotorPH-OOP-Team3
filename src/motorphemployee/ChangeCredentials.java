@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author set
  */
-public class ChangeCredentials extends javax.swing.JFrame {
+public class ChangeCredentials extends javax.swing.JDialog {
 
     /**
      * Creates new form ChangeCredentials
@@ -24,7 +24,8 @@ public class ChangeCredentials extends javax.swing.JFrame {
     
     private String employeeNumber;
     
-    public ChangeCredentials(String employeeNumber) {
+    public ChangeCredentials(java.awt.Frame owner, String employeeNumber) {
+        super(owner, true); // modal: the Dashboard waits until this form is closed
         this.employeeNumber = employeeNumber;
         initComponents();
     }
@@ -48,7 +49,7 @@ public class ChangeCredentials extends javax.swing.JFrame {
         applyChanges = new javax.swing.JButton();
         cancel = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setUndecorated(true);
         setResizable(false);
 

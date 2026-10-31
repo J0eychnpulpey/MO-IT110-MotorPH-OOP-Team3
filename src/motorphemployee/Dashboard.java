@@ -1122,7 +1122,7 @@ public class Dashboard extends javax.swing.JFrame {
 
     private void button_leave_formActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_leave_formActionPerformed
         // TODO add your handling code here:
-    LeaveForm leaveForm = new LeaveForm(employeeNumber);
+    LeaveForm leaveForm = new LeaveForm(this, employeeNumber);
     
     // Make the LeaveForm visible
     leaveForm.setVisible(true);
@@ -1150,7 +1150,7 @@ public class Dashboard extends javax.swing.JFrame {
 
     private void button_changeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_button_changeActionPerformed
         // TODO add your handling code here:
-        ChangeCredentials changeCredentials = new ChangeCredentials(employeeNumber);
+        ChangeCredentials changeCredentials = new ChangeCredentials(this, employeeNumber);
     
    
         changeCredentials.setVisible(true);
