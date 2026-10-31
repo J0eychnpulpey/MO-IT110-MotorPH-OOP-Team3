@@ -163,6 +163,38 @@ an actual timecard.
 | Numbers | for this dataset the timecard has the same working days as the old table (Jun 20, Jul 23, Aug 22, Sep 21, Oct 23, Nov 21, Dec 22), so payslip amounts for those months do not move — but they are now derived from the timecard, and a month with no rows is not offered at all |
 | Not yet verified (2026-10-31) | GUI click-through of View Salary / Calculate Salary (compiled and console-tested, not clicked in this run — the 21:15 GUI retest covered the leave screens only, not these two) |
 
+## Leave credit rule (matches the original program)
+
+Approving a leave deducts exactly **one** credit, no matter how many days the request covers:
+a 4-day leave moves the column from 11 to 10, a 2-day leave from 12 to 11. That is what the
+baseline program does, so the refactor kept it on purpose.
+
+```java
+// baseline 655d43d, LeaveApproval.updateLeaveCredits(...)
+if (isApproved) {
+    if (leaveCredits > 0) {
+        data[21] = String.valueOf(leaveCredits - 1); // Deduct 1 leave credit
+        data[22] = String.valueOf(approvedLeaves + 1);
+```
+
+`days` is a parameter of that method but it is never used for the deduction; it is only recorded
+in `leaves.csv`. Leave credits also never reach the payslip: gross pay is
+`workedDays * hourlyRate * 8`, and `workedDays` comes from the timecard, never from approved
+leaves. Keeping the behaviour was a deliberate decision (2026-10-31): matching the original
+program is worth more for the TA comparison than a rule nobody asked for. A days-based
+deduction (`credits - days`) would be a rule change and needs its own note here first.
+
+Verified on the running app (Eclipse, 2026-10-31): a 4-day Emergency Leave was submitted from
+the employee Dashboard, appeared in Pending Leaves, was approved, landed in `leaves.csv` as
+`1,Emergency Leave,4,for testing only,Yes`, and moved employee 1 from `11,1,0` to `10,2,0`.
+
+**Open defect in the submit path (ARCH/KI-13):** `LeaveForm.submitActionPerformed` appends its
+own row with `new FileWriter(path, true)` and `row + "\n"`, so the row it writes ends in LF
+while the rest of the file is CRLF, and it bypasses `LeaveService` entirely. A file watcher
+caught the bytes (`... 6F 6E 6C 79 0A`) on two separate runs. Saving still works with the file
+missing, because `FileWriter` creates it, and `Files.readAllLines` accepts both endings - the
+defect is cosmetic for now, but it is the proof that a second writer still exists.
+
 ## Popup windows are modal dialogs (KI-22, 2026-10-31)
 
 Known issue 22 in the MS2 Known Issues List: the popup screens did not take focus, could be opened
