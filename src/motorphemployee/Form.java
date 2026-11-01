@@ -25,6 +25,59 @@ public class Form extends javax.swing.JDialog {
     public Form(java.awt.Frame owner) {
         super(owner, true); // modal: the main menu waits until this form is closed
         initComponents();
+        fitToScreen(); // KI-20: never open larger than the screen, and never without a way out
+    }
+
+    /**
+     * KI-20 fix. initComponents() gives this undecorated, non-resizable dialog a
+     * hard-coded 1012 x 734 size. On a display whose usable work area is smaller than
+     * the content (a 1366 x 768 laptop, or any screen at 125% scaling) the last row of
+     * the layout - the Add Employee and Cancel buttons - is clipped by the window edge.
+     * Because the dialog is undecorated there is no title bar and no X, so the clipped
+     * Cancel button is the only exit the user had: the form becomes a trap.
+     *
+     * The fix has three parts: (1) size the dialog from the content's preferred size
+     * instead of a magic number, (2) when that does not fit the usable screen, put the
+     * content in a scroll pane so every field and both buttons stay reachable, and
+     * (3) bind Escape to dispose(), so there is always an exit even if the button row
+     * is scrolled out of view.
+     */
+    private void fitToScreen() {
+        java.awt.Container body = getContentPane();
+        java.awt.Dimension preferred = body.getPreferredSize();
+        java.awt.Insets insets = getInsets();
+        java.awt.Dimension needed = new java.awt.Dimension(
+                preferred.width + insets.left + insets.right,
+                preferred.height + insets.top + insets.bottom);
+        java.awt.Rectangle usable = java.awt.GraphicsEnvironment
+                .getLocalGraphicsEnvironment().getMaximumWindowBounds();
+
+        if (needsScrollPane(needed, usable)) {
+            javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(body);
+            scroll.setBorder(null);
+            scroll.getVerticalScrollBar().setUnitIncrement(16);
+            scroll.getHorizontalScrollBar().setUnitIncrement(16);
+            setContentPane(scroll);
+        }
+
+        setSize(fitSize(needed, usable));
+        setLocationRelativeTo(null);
+
+        getRootPane().registerKeyboardAction(e -> dispose(),
+                javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0),
+                javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW);
+    }
+
+    /** KI-20: the largest size that still fits the usable screen. */
+    static java.awt.Dimension fitSize(java.awt.Dimension needed, java.awt.Rectangle usable) {
+        return new java.awt.Dimension(
+                Math.min(needed.width, usable.width),
+                Math.min(needed.height, usable.height));
+    }
+
+    /** KI-20: true when the content cannot be shown at its preferred size. */
+    static boolean needsScrollPane(java.awt.Dimension needed, java.awt.Rectangle usable) {
+        return needed.width > usable.width || needed.height > usable.height;
     }
 
     /**

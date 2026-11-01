@@ -212,6 +212,23 @@ many times from the same button, and closing one from the taskbar closed the who
 | No regression | `ConsoleBackendTest` 91/91, `LeaveServiceTest` 44/44, `AttendanceRepositoryTest` 33/33, `javac -Xlint:all` 0 errors |
 | GUI verification | focus and duplicates confirmed by the tester who filed the issue (Ethan, Eclipse, after pulling main @ a29fd2b): "The window focus is now stolen by the popups, so hindi na possible yung duplicates." The third symptom needed the real close path, because Cancel only calls `dispose()`: a `WM_CLOSE` posted to the popup's HWND (the same message the taskbar's "Close window" sends) closed the form and left the app running (`APP_ALIVE=YES`, `POPUP_GONE=True`). Details in `oop/ki22-modal-popups-output.txt` |
 
+## Add Employee form fits the screen and always has an exit (KI-20, 2026-11-01)
+
+Known issue 20 in the MS2 Known Issues List: the Add Employee form's buttons are cropped at the
+bottom, the window is not resizable, and there is no visible exit.
+
+| What | Evidence |
+|---|---|
+| Cause | `Form.initComponents()` ended with `setSize(1012, 734)` on a `setUndecorated(true)` / `setResizable(false)` `JDialog`, while the content's own preferred size is 1034 x 714. Nothing tied the window to the screen it opens on |
+| Why it is screen-dependent | `setLocationRelativeTo(null)` centres the dialog on the **screen**, so the height that has to fit is the display, not the content. On a 1366 x 768 laptop at 125% scaling the logical screen is 1093 x 614: the dialog opens at y = -60 and the button row (y 656-682 inside the dialog) lands at screen y 596-622 — 48 px below the 574 px work area. At 100% on the same laptop the row sits at 673-699 and is visible, which is why the defect looked machine-specific |
+| No exit | the dialog is undecorated, so there is no title bar and no X; `Cancel` is the only exit and it lives in the cropped row, leaving the taskbar as the only way out |
+| Fix | `fitToScreen()` runs after `initComponents()`: size the dialog from the content's preferred size instead of the magic number, clamp to `GraphicsEnvironment.getMaximumWindowBounds()`, wrap the content in a `JScrollPane` when it still does not fit, and bind Escape to `dispose()`. `Cancel`, `DISPOSE_ON_CLOSE` and modality are unchanged |
+| Evidence | `oop/ki20-screen-fit-output.txt` — 22 assertions, 0 failures: old arithmetic leaves 48 px of the button row below the work area at 1366x768 @125% and 55 px at 1024x600; the fixed form opens 1034x714 on the 1920x1080 dev screen with both buttons inside the work area; an 800x500 window turns scrollable and `Cancel` is reachable after scrolling; Escape disposes the form and the JVM survives. The probe is committed as `test/motorphemployee/Ki20ScreenFitProbe.java` — in Eclipse, right-click it and Run As → Java Application |
+| Left alone | the other screens keep their fixed sizes: only `Form` was reported, and `ChangeCredentials` / `LeaveForm` are small dialogs that fit everywhere |
+| Eclipse | builds with Eclipse's own compiler, not just `javac`: ECJ 3.46.100 on all three source roots gives 107 class files, 0 errors and 39 warnings, every one of them a pre-existing unused local. Running the probe from the ECJ output also gives 22 of 22. `test/` is already a source folder in `.classpath`, so no Eclipse project file had to change |
+| Not yet verified | a click-through on hardware that actually needs the scroll pane — the probe forces the window size instead of running on a 1366x768 @125% machine |
+| No regression | `ConsoleBackendTest` 91/91, `javac -Xlint:all` 0 errors |
+
 ## How to build and run (verified commands)
 
 ```bash
@@ -241,4 +258,5 @@ java -cp <outdir> AttendanceRepositoryTest
 
 Evidence files in this folder: `console-test-output.txt` (the actual run),
 `parity-report.txt` (CP2 vs OOP, per input), `cp2-parity-output.txt` (frozen CP2 formulas),
-`leave-fix-test-output.txt` (the leave workflow run), `attendance-test-output.txt` (the timecard run).
+`leave-fix-test-output.txt` (the leave workflow run), `attendance-test-output.txt` (the timecard run),
+`ki22-modal-popups-output.txt` (the popup close probe), `ki20-screen-fit-output.txt` (the Add Employee screen-fit probe).
