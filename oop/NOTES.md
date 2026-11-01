@@ -40,9 +40,11 @@ The GUI rewiring is complete (commit `942aa9d`): `MainMenu` and `Dashboard` call
 2. **`Person` owns the 5 personal fields.** `Employee` inherits `getFirstName`, `setFirstName`,
    `getFullName`, etc. instead of re-declaring them (the Method Dictionary lists `getFullName` on
    both rows — inheritance makes that one implementation, not two).
-3. **`AttendanceLog` stores records in memory.** Open question in the Refactoring Plan: CP2
-   hardcoded `workingDays[]` (`MainMenu.java:1066`) and no timecard CSV has been imported, so no
-   attendance data was invented. The API is CSV-ready — an adapter needs no change to callers.
+3. **`AttendanceLog` is filled from the real timecard** (commit `773d8a8`). `AttendanceRepository`
+   reads `src/motorphemployee/attendance.csv` (5,168 rows, 34 employees, 2025-06-03 → 2025-12-31)
+   and the period picker only offers months that have records. CP2's hardcoded `workingDays[]`
+   (`MainMenu.java:1066`) and the in-memory 08:00–16:00 bridge are gone; because the API was already
+   CSV-ready, no caller changed.
 4. **Constructors assign validated values directly** instead of calling their own setters, so a
    subclass never observes a half-constructed object (`-Xlint:this-escape` clean).
 5. **`private calculateGross` takes the period bounds explicitly** (`AttendanceLog, int employeeId,
@@ -50,9 +52,9 @@ The GUI rewiring is complete (commit `942aa9d`): `MainMenu` and `Dashboard` call
    Dictionary row. The formula is exactly the sheet's (`workedDays * hourlyRate * 8`); the extra
    arguments only replace hidden state, because a private helper cannot know the payroll period
    otherwise. The public surface (`calculatePayroll`) matches the sheet one-to-one.
-6. **`absences` is 0** in every `PayrollRecord`. There is no absence source in the repo yet (open
-   open question — no `attendance.csv`), and inventing absence day counts would put fabricated numbers
-   on a payslip. `totalLeaves` comes from the employee's own `getAnnualLeaveCredits()`.
+6. **`absences` is 0** in every `PayrollRecord`. The timecard records clock-in and clock-out only, so
+   there is no absence or leave-day source to derive it from, and inventing day counts would put
+   fabricated numbers on a payslip. `totalLeaves` comes from the employee's own `getAnnualLeaveCredits()`.
 7. **The GUI builds the subclass that matches the status column** (2026-10-30). `MainMenu` and
    `Dashboard` used to construct `RegularEmployee` for every row, so the polymorphic benefit methods
    returned permanent-staff values (1,500 / 2,000 / 12) for the 11 probationary employees. Both
