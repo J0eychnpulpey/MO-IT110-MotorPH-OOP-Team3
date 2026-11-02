@@ -22,7 +22,7 @@ import java.util.List;
  * {@code leaves.csv} while the request stayed in {@code pendingleaves.csv} until
  * somebody remembered to press Save.</p>
  *
- * <p>This class is the single writer for the leave files. One call to
+ * <p>This class is the single writer for the approve and reject decisions. One call to
  * {@link #decide(int, boolean)} applies the whole decision - the request leaves
  * the pending file, one row is appended to the processed file with the columns
  * in header order, and the employee's leave credits move - and restores all
