@@ -660,9 +660,17 @@ public class Form extends javax.swing.JDialog {
         // Method to save data to a CSV file
         private void saveToCSV(Object[] data) {
     try (FileWriter csvWriter = new FileWriter("src/motorphemployee/data.csv", true)) {
-        for (Object field : data) {
-            csvWriter.append(field.toString()).append(",");
-        }
+    	for (int index = 0; index < data.length; index++) {
+    		var field = data[index];
+            csvWriter.append(field.toString());
+            
+            // The readers are fragile with a trailing comma, so do not append a comma
+            // on the last item.
+            if (index != data.length - 1) {
+            	csvWriter.append(",");
+            }
+    	}
+    	
         csvWriter.append("\n");
     } catch (IOException e) {
         e.printStackTrace();
