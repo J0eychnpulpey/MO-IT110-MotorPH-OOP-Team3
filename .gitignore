@@ -6,7 +6,7 @@ dist/
 *.jar
 
 # NetBeans private/IDE state
-nbproject/private/
+nbproject/
 nbbuild/
 nbdist/
 

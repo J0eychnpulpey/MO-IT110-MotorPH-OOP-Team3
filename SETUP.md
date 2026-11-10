@@ -29,7 +29,8 @@ Two IDEs are supported. Pick one — the code is the same, only the project sett
 | `oop/src/motorphemployee/oop/` | The **new OOP backend** (`Person`, `Employee`, calculators, `PayrollRecord`, …) | ✅ **yes** |
 | `oop/*.txt`, `oop/NOTES.md` | Console test + CP2 parity **evidence** | — |
 | `src/motorphemployee/*.csv` | Sample data (fictional MotorPH dataset) | — |
-| `nbproject/`, `build.xml` | NetBeans/Ant metadata from the CP2 baseline — ignored by both IDEs | — |
+
+The NetBeans/Ant build metadata that shipped with the baseline (`nbproject/`, `build.xml`, `manifest.mf`) was removed in the final cleanup. Nothing in the build depends on it: Eclipse reads `.classpath`, VS Code reads `settings.json`, and the terminal commands in section 5 call `javac` directly.
 
 > ⚠️ **The #1 setup mistake:** adding only `src`. If `oop/src` is missing from the build path, every `motorphemployee.oop` import shows as an error and `PayrollCalculator` appears not to exist.
 
@@ -175,7 +176,7 @@ Keep these in sync with the worksheet — they are the proof quoted in the MS2 t
 
 ## 8. Ground rules
 
-- **Never commit** `build/`, `bin/`, `*.class`, `dist/`, `nbproject/private/`.
+- **Never commit** `build/`, `bin/`, `*.class`, `dist/`, or IDE-private folders.
 - `.vscode/` is git-ignored (machine-specific). `.project`, `.classpath`, `.settings/` **are** committed — they only contain portable settings, and they make Eclipse setup one click.
 - **GUI = presentation only.** All payroll computation belongs to the backend (`motorphemployee.oop`).
 - The app, the worksheet, the test evidence and this repository must tell the **same story** (MS2 consistency requirement).

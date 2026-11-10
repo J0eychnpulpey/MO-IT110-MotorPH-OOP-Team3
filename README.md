@@ -26,7 +26,7 @@ The repo holds the source, the worksheet revisions, the test output and the docu
 - Two service classes were added, `LeaveService` and `AttendanceRepository`.
 - The payroll screens read the real timecard, `attendance.csv`.
 
-These files were left alone: `data.csv`, `leaves.csv`, `pendingleaves.csv`, `nbproject/`, `build.xml`. If you need the code before any of our edits, it is in commit `655d43d`. The old README is [README.CP2.md](README.CP2.md).
+The data files `data.csv`, `leaves.csv` and `pendingleaves.csv` were left alone. The NetBeans/Ant build metadata that came with the baseline (`nbproject/`, `build.xml`, `manifest.mf`) was removed in the final cleanup: the project builds with Eclipse, VS Code or plain `javac`, and [SETUP.md](SETUP.md) covers all three. If you need the code before any of our edits, it is in commit `655d43d`. The old README is [README.CP2.md](README.CP2.md).
 
 The baseline came from MO-IT103, Computer Programming 2, A1101, Group 4. Members: John Paul P., Eliakim Set, El Chad Chavez, Emersson Aporado, Nesty Loy.
 
@@ -49,7 +49,7 @@ What was wrong with it, based on our Milestone 1 design:
 |---|---|
 | MS1, OOP design package | Done. 16 unique classes, 35 CRC rows and 97 method rows, built across W2 to W5. |
 | MS2, OOP implementation | Code complete for the backend. 12 of the 16 design classes have a class file, the other four are design-only. The numbers are below. |
-| TA, documentation | Waiting on external QA and the final documentation. |
+| TA, documentation | External QA is done (W11). The final documentation is in progress (W12). |
 
 MS2 in numbers:
 
@@ -124,7 +124,7 @@ The four statutory deductions follow the official government matrices. Where tha
 
 - `main` carries the refactor chain for this milestone. Each step is built and tested before it is pushed.
 - Commit messages: a short imperative subject, then what changed.
-- Never commit `build/`, `bin/`, `dist/`, `*.class`, `nbproject/private/`, `.vscode/`.
+- Never commit `build/`, `bin/`, `dist/`, `*.class` or your own `.vscode/`.
 - Committed on purpose: `.project`, `.classpath`, `.settings/`, so every member can import the project in one step.
 - Keep the docs consistent. The app, the Milestone worksheet, the test evidence and this repo have to describe the same work.
 
