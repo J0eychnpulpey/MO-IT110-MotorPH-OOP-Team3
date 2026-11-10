@@ -2,12 +2,12 @@
 
 **MO-IT110 · Team 3 · MotorPH OOP refactor**
 
-Two IDEs are supported. Pick one — the code is the same, only the project settings differ:
+Three IDEs are supported. Pick one — the code is the same, only the project settings differ:
 
 | I need to… | Use |
 |---|---|
-| Write / refactor code, run the console tests, debug | **VS Code** or **Eclipse** |
-| Just run the app and check a feature | either one, or the terminal commands below |
+| Write / refactor code, run the console tests, debug | **VS Code**, **Eclipse** or **NetBeans** |
+| Just run the app and check a feature | any of them, or the terminal commands below |
 
 ---
 
@@ -29,8 +29,9 @@ Two IDEs are supported. Pick one — the code is the same, only the project sett
 | `oop/src/motorphemployee/oop/` | The **new OOP backend** (`Person`, `Employee`, calculators, `PayrollRecord`, …) | ✅ **yes** |
 | `oop/*.txt`, `oop/NOTES.md` | Console test + CP2 parity **evidence** | — |
 | `src/motorphemployee/*.csv` | Sample data (fictional MotorPH dataset) | — |
+| `nbproject/`, `build.xml`, `manifest.mf` | NetBeans/Ant project metadata, set to **Java 21** source and target — read only by NetBeans | — |
 
-The NetBeans/Ant build metadata that shipped with the baseline (`nbproject/`, `build.xml`, `manifest.mf`) was removed in the final cleanup. Nothing in the build depends on it: Eclipse reads `.classpath`, VS Code reads `settings.json`, and the terminal commands in section 5 call `javac` directly.
+Eclipse and VS Code ignore those three files. NetBeans needs them, plus one extra step: section 5.
 
 > ⚠️ **The #1 setup mistake:** adding only `src`. If `oop/src` is missing from the build path, every `motorphemployee.oop` import shows as an error and `PayrollCalculator` appears not to exist.
 
@@ -94,7 +95,7 @@ The NetBeans/Ant build metadata that shipped with the baseline (`nbproject/`, `b
 | Symptom | Fix |
 |---|---|
 | `motorphemployee.oop` unresolved | `Ctrl+Shift+P` → **Java: Clean Java Language Server Workspace**, then reopen the folder |
-| `Could not find or load main class` | Confirm both source paths are listed in `settings.json`; or use the terminal commands in section 5 |
+| `Could not find or load main class` | Confirm both source paths are listed in `settings.json`; or use the terminal commands in section 6 |
 | Login says *"Incorrect employee number, username, or password"* even with the sample credentials | The working directory is wrong — the app cannot read `src/motorphemployee/data.csv`. Set `"cwd": "${workspaceFolder}"` in the launch configuration |
 
 ---
@@ -126,7 +127,30 @@ The repository ships **`.project`**, **`.classpath`** and **`.settings/`** alrea
 
 ---
 
-## 5. Terminal only (no IDE)
+## 5. NetBeans
+
+The repository carries the Ant project metadata the program was written in: `build.xml`, `manifest.mf` and `nbproject/`. It is set to **Java 21** source and target, the same as `.classpath`, so NetBeans produces the same class files as the other two IDEs.
+
+1. `File → Open Project…` → select the cloned repository folder → **Open Project**.
+2. **Add the second source root.** NetBeans opens the project with `src` only. Right-click the project → `Properties → Sources → Add Folder…` → select **`oop/src`** → `OK`.
+   Without this step every `motorphemployee.oop` import is red and `PayrollCalculator` looks missing — the same trap as in section 2.
+3. **Check the platform.** `Properties → Libraries → Java Platform` must be **JDK 21**. If the entry is unbound, add your own JDK 21 install.
+4. **Run the app.** Right-click the project → `Run`. The main class is `motorphemployee.LoadingScreen`.
+5. **Run the console tests.** `Properties → Run → Main Class` → `motorphemployee.oop.ConsoleBackendTest`, then `Run` again. Expected output ends with `=== SUMMARY: 91 passed, 0 failed ===`.
+
+The working directory must stay the project root: the program loads its data with the relative path `src/motorphemployee/data.csv`.
+
+**Troubleshooting (NetBeans)**
+
+| Symptom | Fix |
+|---|---|
+| Red imports on `motorphemployee.oop` | The second source root is missing — step 2 |
+| `Could not find or load main class` | `Properties → Run → Main Class`, then `Clean and Build` |
+| Login rejects the sample credentials | The working directory is not the project root — `Properties → Run → Working Directory` |
+
+---
+
+## 6. Terminal only (no IDE)
 
 From the **repository root**:
 
@@ -149,7 +173,7 @@ RESULT: PASS
 
 ---
 
-## 6. Sample login (fictional data)
+## 7. Sample login (fictional data)
 
 | Screen | Fields | Value |
 |---|---|---|
@@ -160,7 +184,7 @@ All 34 employee records share the same demo credentials, and passwords are store
 
 ---
 
-## 7. Evidence files
+## 8. Evidence files
 
 Keep these in sync with the worksheet — they are the proof quoted in the MS2 tabs:
 
@@ -174,7 +198,7 @@ Keep these in sync with the worksheet — they are the proof quoted in the MS2 t
 
 ---
 
-## 8. Ground rules
+## 9. Ground rules
 
 - **Never commit** `build/`, `bin/`, `*.class`, `dist/`, or IDE-private folders.
 - `.vscode/` is git-ignored (machine-specific). `.project`, `.classpath`, `.settings/` **are** committed — they only contain portable settings, and they make Eclipse setup one click.

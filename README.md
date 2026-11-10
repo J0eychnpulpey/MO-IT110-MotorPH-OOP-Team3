@@ -26,7 +26,7 @@ The repo holds the source, the worksheet revisions, the test output and the docu
 - Two service classes were added, `LeaveService` and `AttendanceRepository`.
 - The payroll screens read the real timecard, `attendance.csv`.
 
-The data files `data.csv`, `leaves.csv` and `pendingleaves.csv` were left alone. The NetBeans/Ant build metadata that came with the baseline (`nbproject/`, `build.xml`, `manifest.mf`) was removed in the final cleanup: the project builds with Eclipse, VS Code or plain `javac`, and [SETUP.md](SETUP.md) covers all three. If you need the code before any of our edits, it is in commit `655d43d`. The old README is [README.CP2.md](README.CP2.md).
+The data files `data.csv`, `leaves.csv` and `pendingleaves.csv` were left alone. The NetBeans/Ant project metadata the program was written in (`nbproject/`, `build.xml`, `manifest.mf`) is kept and set to Java 21, so NetBeans can open the project as well; it needs `oop/src` added as a second source root, which [SETUP.md](SETUP.md) section 5 covers. If you need the code before any of our edits, it is in commit `655d43d`. The old README is [README.CP2.md](README.CP2.md).
 
 The baseline came from MO-IT103, Computer Programming 2, A1101, Group 4. Members: John Paul P., Eliakim Set, El Chad Chavez, Emersson Aporado, Nesty Loy.
 
@@ -78,7 +78,7 @@ Rules we followed:
 
 ## Running it
 
-[SETUP.md](SETUP.md) has the steps for VS Code, Eclipse and the terminal. Eclipse needs nothing extra, `.project` and `.classpath` are committed. VS Code needs the Extension Pack for Java.
+[SETUP.md](SETUP.md) has the steps for VS Code, Eclipse, NetBeans and the terminal. Eclipse needs nothing extra, `.project` and `.classpath` are committed. VS Code needs the Extension Pack for Java.
 
 There are two source roots. `src` is the CP2 GUI and `oop/src` is the new backend.
 
@@ -124,7 +124,7 @@ The four statutory deductions follow the official government matrices. Where tha
 
 - `main` carries the refactor chain for this milestone. Each step is built and tested before it is pushed.
 - Commit messages: a short imperative subject, then what changed.
-- Never commit `build/`, `bin/`, `dist/`, `*.class` or your own `.vscode/`.
+- Never commit `build/`, `bin/`, `dist/`, `*.class`, `nbproject/private/` or your own `.vscode/`.
 - Committed on purpose: `.project`, `.classpath`, `.settings/`, so every member can import the project in one step.
 - Keep the docs consistent. The app, the Milestone worksheet, the test evidence and this repo have to describe the same work.
 
